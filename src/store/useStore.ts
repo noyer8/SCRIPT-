@@ -53,6 +53,7 @@ const getDefaultNodeContent = (type: NodeType): string => {
     start: 'Bonjour, je suis [Votre nom] de [Entreprise]...',
     script: 'Entrez votre script ici...',
     question: 'Posez votre question ici...',
+    responses: 'Titre du bloc de réponses',
     objection: 'Réponse à l\'objection...',
     condition: 'Condition à vérifier...',
     action: 'Action à effectuer...',

@@ -5,6 +5,7 @@ import {
   Play,
   FileText,
   HelpCircle,
+  MessageSquare,
   AlertTriangle,
   GitBranch,
   Zap,
@@ -20,6 +21,7 @@ const iconMap = {
   Play,
   FileText,
   HelpCircle,
+  MessageSquare,
   AlertTriangle,
   GitBranch,
   Zap,
@@ -38,7 +40,7 @@ function ScriptNode({ id, data, selected }: NodeProps) {
   return (
     <div
       className={`
-        min-w-[200px] max-w-[280px] rounded-lg shadow-md border-2 transition-all
+        min-w-[200px] rounded-lg shadow-md border-2 transition-all
         ${selected ? 'ring-2 ring-blue-400 ring-offset-2' : ''}
         ${isCurrentInPlayer ? 'ring-4 ring-green-400 ring-offset-2 scale-105' : ''}
       `}
@@ -58,18 +60,18 @@ function ScriptNode({ id, data, selected }: NodeProps) {
         >
           <IconComponent className="w-4 h-4 text-white" />
         </div>
-        <span className="font-semibold text-sm text-gray-800 truncate">
+        <span className="font-semibold text-sm text-gray-800">
           {nodeData.label || config.label}
         </span>
       </div>
 
       {/* Content */}
       <div className="px-3 py-2">
-        <p className="text-xs text-gray-600 line-clamp-3 whitespace-pre-wrap">
+        <p className="text-xs text-gray-600 whitespace-pre-wrap">
           {nodeData.content || 'Aucun contenu...'}
         </p>
         {nodeData.notes && (
-          <p className="text-xs text-amber-600 mt-1 italic truncate">
+          <p className="text-xs text-amber-600 mt-1 italic whitespace-pre-wrap">
             Note: {nodeData.notes}
           </p>
         )}

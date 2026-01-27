@@ -5,6 +5,7 @@ export type NodeType =
   | 'start'           // Nœud de départ
   | 'script'          // Script à lire
   | 'question'        // Question au prospect
+  | 'responses'       // Réponses possibles du client
   | 'objection'       // Gestion d'objection
   | 'condition'       // Condition/branchement
   | 'action'          // Action à effectuer
@@ -78,6 +79,12 @@ export const NODE_TYPE_CONFIG: Record<NodeType, {
     color: '#8b5cf6',
     icon: 'HelpCircle',
     description: 'Question avec options de réponse'
+  },
+  responses: {
+    label: 'Réponses Client',
+    color: '#6366f1',
+    icon: 'MessageSquare',
+    description: 'Plusieurs phrases possibles du client'
   },
   objection: {
     label: 'Objection',

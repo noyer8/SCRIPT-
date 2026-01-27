@@ -137,12 +137,12 @@ export default function PropertiesPanel() {
           />
         </div>
 
-        {/* Options for questions */}
-        {(localData.type === 'question' || localData.type === 'condition') && (
+        {/* Options for questions/responses */}
+        {(localData.type === 'question' || localData.type === 'condition' || localData.type === 'responses') && (
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="text-sm font-medium text-gray-700">
-                Options de réponse
+                {localData.type === 'responses' ? 'Phrases possibles du client' : 'Options de réponse'}
               </label>
               <button
                 onClick={addOption}
