@@ -8,6 +8,7 @@ import {
   Filter,
   X,
   Users,
+  Upload,
 } from 'lucide-react';
 import { useCrmStore } from '../../store/useCrmStore';
 import Pipeline from './Pipeline';
@@ -15,6 +16,7 @@ import ListView from './ListView';
 import ContactDetail from './ContactDetail';
 import AddContactModal from './AddContactModal';
 import SettingsModal from './SettingsModal';
+import ImportModal from './ImportModal';
 import { Link } from 'react-router-dom';
 
 export default function CrmPage() {
@@ -36,6 +38,7 @@ export default function CrmPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [showImport, setShowImport] = useState(false);
 
   const tags = getAllTags();
   const hasFilters = !!filterStageId || !!filterTag;
@@ -154,8 +157,18 @@ export default function CrmPage() {
           <button
             onClick={() => setShowSettings(true)}
             className="p-2 hover:bg-gray-100 rounded-lg"
+            title="Paramètres"
           >
             <Settings className="w-5 h-5 text-gray-600" />
+          </button>
+
+          <button
+            onClick={() => setShowImport(true)}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            title="Importer"
+          >
+            <Upload className="w-4 h-4" />
+            Importer
           </button>
 
           <button
@@ -175,6 +188,7 @@ export default function CrmPage() {
       {selectedContactId && <ContactDetail />}
       {showAdd && <AddContactModal defaultStageId={stages[0]?.id || ''} onClose={() => setShowAdd(false)} />}
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+      {showImport && <ImportModal onClose={() => setShowImport(false)} />}
     </div>
   );
 }
