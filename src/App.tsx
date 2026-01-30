@@ -1,33 +1,15 @@
-import Sidebar from './components/sidebar/Sidebar';
-import Header from './components/Header';
-import FlowEditor from './components/editor/FlowEditor';
-import PropertiesPanel from './components/editor/PropertiesPanel';
-import Player from './components/player/Player';
+import { HashRouter, Routes, Route } from 'react-router-dom';
+import ScriptFlowPage from './components/ScriptFlowPage';
+import CrmPage from './components/crm/CrmPage';
 
 function App() {
   return (
-    <div className="h-screen flex overflow-hidden bg-gray-100">
-      {/* Sidebar */}
-      <Sidebar />
-
-      {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <Header />
-
-        {/* Editor area */}
-        <div className="flex-1 flex overflow-hidden">
-          {/* Flow editor */}
-          <FlowEditor />
-
-          {/* Properties panel */}
-          <PropertiesPanel />
-        </div>
-      </div>
-
-      {/* Player overlay */}
-      <Player />
-    </div>
+    <HashRouter>
+      <Routes>
+        <Route path="/" element={<ScriptFlowPage />} />
+        <Route path="/crm" element={<CrmPage />} />
+      </Routes>
+    </HashRouter>
   );
 }
 

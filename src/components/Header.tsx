@@ -1,4 +1,5 @@
-import { Play, Download, Upload, Info } from 'lucide-react';
+import { Play, Download, Upload, Info, Users } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 import { useRef, useState } from 'react';
 import type { Script } from '../types';
@@ -112,6 +113,14 @@ export default function Header() {
           onChange={handleImport}
           className="hidden"
         />
+
+        <Link
+          to="/crm"
+          className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+        >
+          <Users className="w-4 h-4" />
+          CRM
+        </Link>
 
         <div className="relative">
           <button

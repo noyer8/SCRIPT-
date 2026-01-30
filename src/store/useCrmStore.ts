@@ -1,0 +1,294 @@
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { v4 as uuidv4 } from 'uuid';
+
+// --- Types ---
+
+export type FieldType = 'text' | 'number' | 'email' | 'phone' | 'select' | 'date' | 'textarea' | 'url' | 'checkbox';
+
+export interface CustomField {
+  id: string;
+  name: string;
+  type: FieldType;
+  options?: string[]; // for select
+  required?: boolean;
+  defaultValue?: string;
+}
+
+export interface PipelineStage {
+  id: string;
+  name: string;
+  color: string;
+  order: number;
+}
+
+export interface Activity {
+  id: string;
+  contactId: string;
+  type: 'call' | 'email' | 'meeting' | 'note' | 'task';
+  content: string;
+  date: string;
+  done?: boolean;
+}
+
+export interface Contact {
+  id: string;
+  firstName: string;
+  lastName: string;
+  company: string;
+  email: string;
+  phone: string;
+  stageId: string;
+  customFields: Record<string, string>;
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// --- Default Data ---
+
+const DEFAULT_STAGES: PipelineStage[] = [
+  { id: 'new', name: 'Nouveau', color: '#6366f1', order: 0 },
+  { id: 'contacted', name: 'Contacté', color: '#3b82f6', order: 1 },
+  { id: 'qualified', name: 'Qualifié', color: '#8b5cf6', order: 2 },
+  { id: 'proposal', name: 'Proposition', color: '#f59e0b', order: 3 },
+  { id: 'negotiation', name: 'Négociation', color: '#f97316', order: 4 },
+  { id: 'won', name: 'Gagné', color: '#22c55e', order: 5 },
+  { id: 'lost', name: 'Perdu', color: '#ef4444', order: 6 },
+];
+
+const DEFAULT_FIELDS: CustomField[] = [
+  { id: 'sector', name: 'Secteur', type: 'text' },
+  { id: 'source', name: 'Source', type: 'select', options: ['Site web', 'Appel entrant', 'Recommandation', 'LinkedIn', 'Salon', 'Autre'] },
+  { id: 'budget', name: 'Budget', type: 'text' },
+  { id: 'decision_date', name: 'Date de décision', type: 'date' },
+  { id: 'notes', name: 'Notes', type: 'textarea' },
+];
+
+// --- Store ---
+
+interface CrmState {
+  contacts: Contact[];
+  stages: PipelineStage[];
+  customFields: CustomField[];
+  activities: Activity[];
+  selectedContactId: string | null;
+  searchQuery: string;
+  filterStageId: string | null;
+  filterTag: string | null;
+  view: 'pipeline' | 'list';
+
+  // Contacts
+  addContact: (contact: Omit<Contact, 'id' | 'createdAt' | 'updatedAt' | 'customFields' | 'tags'>) => string;
+  updateContact: (id: string, updates: Partial<Contact>) => void;
+  deleteContact: (id: string) => void;
+  moveContact: (id: string, stageId: string) => void;
+  setSelectedContact: (id: string | null) => void;
+  addTagToContact: (id: string, tag: string) => void;
+  removeTagFromContact: (id: string, tag: string) => void;
+
+  // Stages
+  addStage: (name: string, color: string) => void;
+  updateStage: (id: string, updates: Partial<PipelineStage>) => void;
+  deleteStage: (id: string) => void;
+  reorderStages: (stages: PipelineStage[]) => void;
+
+  // Custom Fields
+  addCustomField: (field: Omit<CustomField, 'id'>) => void;
+  updateCustomField: (id: string, updates: Partial<CustomField>) => void;
+  deleteCustomField: (id: string) => void;
+
+  // Activities
+  addActivity: (activity: Omit<Activity, 'id'>) => void;
+  updateActivity: (id: string, updates: Partial<Activity>) => void;
+  deleteActivity: (id: string) => void;
+  getContactActivities: (contactId: string) => Activity[];
+
+  // Filters
+  setSearchQuery: (query: string) => void;
+  setFilterStage: (stageId: string | null) => void;
+  setFilterTag: (tag: string | null) => void;
+  setView: (view: 'pipeline' | 'list') => void;
+  getFilteredContacts: () => Contact[];
+  getAllTags: () => string[];
+}
+
+export const useCrmStore = create<CrmState>()(
+  persist(
+    (set, get) => ({
+      contacts: [],
+      stages: DEFAULT_STAGES,
+      customFields: DEFAULT_FIELDS,
+      activities: [],
+      selectedContactId: null,
+      searchQuery: '',
+      filterStageId: null,
+      filterTag: null,
+      view: 'pipeline',
+
+      // --- Contacts ---
+      addContact: (data) => {
+        const id = uuidv4();
+        const now = new Date().toISOString();
+        const contact: Contact = {
+          ...data,
+          id,
+          customFields: {},
+          tags: [],
+          createdAt: now,
+          updatedAt: now,
+        };
+        set((s) => ({ contacts: [...s.contacts, contact] }));
+        return id;
+      },
+
+      updateContact: (id, updates) => {
+        set((s) => ({
+          contacts: s.contacts.map((c) =>
+            c.id === id ? { ...c, ...updates, updatedAt: new Date().toISOString() } : c
+          ),
+        }));
+      },
+
+      deleteContact: (id) => {
+        set((s) => ({
+          contacts: s.contacts.filter((c) => c.id !== id),
+          activities: s.activities.filter((a) => a.contactId !== id),
+          selectedContactId: s.selectedContactId === id ? null : s.selectedContactId,
+        }));
+      },
+
+      moveContact: (id, stageId) => {
+        get().updateContact(id, { stageId });
+      },
+
+      setSelectedContact: (id) => set({ selectedContactId: id }),
+
+      addTagToContact: (id, tag) => {
+        const contact = get().contacts.find((c) => c.id === id);
+        if (!contact || contact.tags.includes(tag)) return;
+        get().updateContact(id, { tags: [...contact.tags, tag] });
+      },
+
+      removeTagFromContact: (id, tag) => {
+        const contact = get().contacts.find((c) => c.id === id);
+        if (!contact) return;
+        get().updateContact(id, { tags: contact.tags.filter((t) => t !== tag) });
+      },
+
+      // --- Stages ---
+      addStage: (name, color) => {
+        const maxOrder = Math.max(...get().stages.map((s) => s.order), -1);
+        set((s) => ({
+          stages: [...s.stages, { id: uuidv4(), name, color, order: maxOrder + 1 }],
+        }));
+      },
+
+      updateStage: (id, updates) => {
+        set((s) => ({
+          stages: s.stages.map((st) => (st.id === id ? { ...st, ...updates } : st)),
+        }));
+      },
+
+      deleteStage: (id) => {
+        const firstStage = get().stages.find((s) => s.id !== id);
+        if (!firstStage) return;
+        set((s) => ({
+          stages: s.stages.filter((st) => st.id !== id),
+          contacts: s.contacts.map((c) =>
+            c.stageId === id ? { ...c, stageId: firstStage.id } : c
+          ),
+        }));
+      },
+
+      reorderStages: (stages) => set({ stages }),
+
+      // --- Custom Fields ---
+      addCustomField: (field) => {
+        set((s) => ({
+          customFields: [...s.customFields, { ...field, id: uuidv4() }],
+        }));
+      },
+
+      updateCustomField: (id, updates) => {
+        set((s) => ({
+          customFields: s.customFields.map((f) => (f.id === id ? { ...f, ...updates } : f)),
+        }));
+      },
+
+      deleteCustomField: (id) => {
+        set((s) => ({
+          customFields: s.customFields.filter((f) => f.id !== id),
+          contacts: s.contacts.map((c) => {
+            const cf = { ...c.customFields };
+            delete cf[id];
+            return { ...c, customFields: cf };
+          }),
+        }));
+      },
+
+      // --- Activities ---
+      addActivity: (activity) => {
+        set((s) => ({
+          activities: [...s.activities, { ...activity, id: uuidv4() }],
+        }));
+      },
+
+      updateActivity: (id, updates) => {
+        set((s) => ({
+          activities: s.activities.map((a) => (a.id === id ? { ...a, ...updates } : a)),
+        }));
+      },
+
+      deleteActivity: (id) => {
+        set((s) => ({ activities: s.activities.filter((a) => a.id !== id) }));
+      },
+
+      getContactActivities: (contactId) => {
+        return get()
+          .activities.filter((a) => a.contactId === contactId)
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      },
+
+      // --- Filters ---
+      setSearchQuery: (query) => set({ searchQuery: query }),
+      setFilterStage: (stageId) => set({ filterStageId: stageId }),
+      setFilterTag: (tag) => set({ filterTag: tag }),
+      setView: (view) => set({ view }),
+
+      getFilteredContacts: () => {
+        const { contacts, searchQuery, filterStageId, filterTag } = get();
+        return contacts.filter((c) => {
+          if (filterStageId && c.stageId !== filterStageId) return false;
+          if (filterTag && !c.tags.includes(filterTag)) return false;
+          if (searchQuery) {
+            const q = searchQuery.toLowerCase();
+            return (
+              c.firstName.toLowerCase().includes(q) ||
+              c.lastName.toLowerCase().includes(q) ||
+              c.company.toLowerCase().includes(q) ||
+              c.email.toLowerCase().includes(q) ||
+              c.phone.includes(q)
+            );
+          }
+          return true;
+        });
+      },
+
+      getAllTags: () => {
+        const tags = new Set<string>();
+        get().contacts.forEach((c) => c.tags.forEach((t) => tags.add(t)));
+        return Array.from(tags).sort();
+      },
+    }),
+    {
+      name: 'noyer-crm-storage',
+      partialize: (state) => ({
+        contacts: state.contacts,
+        stages: state.stages,
+        customFields: state.customFields,
+        activities: state.activities,
+      }),
+    }
+  )
+);
