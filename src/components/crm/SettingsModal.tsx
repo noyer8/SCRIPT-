@@ -29,6 +29,7 @@ export default function SettingsModal({ onClose }: Props) {
     addCustomField,
     updateCustomField,
     deleteCustomField,
+    reorderStages,
   } = useCrmStore();
 
   const [tab, setTab] = useState<'stages' | 'fields'>('stages');
@@ -37,6 +38,8 @@ export default function SettingsModal({ onClose }: Props) {
   const [newFieldName, setNewFieldName] = useState('');
   const [newFieldType, setNewFieldType] = useState<FieldType>('text');
   const [newFieldOptions, setNewFieldOptions] = useState('');
+  const [draggedStageId, setDraggedStageId] = useState<string | null>(null);
+  const [dragOverStageId, setDragOverStageId] = useState<string | null>(null);
 
   const sortedStages = [...stages].sort((a, b) => a.order - b.order);
 
@@ -45,6 +48,31 @@ export default function SettingsModal({ onClose }: Props) {
       addStage(newStageName.trim(), newStageColor);
       setNewStageName('');
     }
+  };
+
+  const handleStageDragStart = (stageId: string) => {
+    setDraggedStageId(stageId);
+  };
+
+  const handleStageDragOver = (e: React.DragEvent, stageId: string) => {
+    e.preventDefault();
+    setDragOverStageId(stageId);
+  };
+
+  const handleStageDrop = (targetStageId: string) => {
+    if (!draggedStageId || draggedStageId === targetStageId) {
+      setDraggedStageId(null);
+      setDragOverStageId(null);
+      return;
+    }
+    const reordered = [...sortedStages];
+    const fromIndex = reordered.findIndex((s) => s.id === draggedStageId);
+    const toIndex = reordered.findIndex((s) => s.id === targetStageId);
+    const [moved] = reordered.splice(fromIndex, 1);
+    reordered.splice(toIndex, 0, moved);
+    reorderStages(reordered.map((s, i) => ({ ...s, order: i })));
+    setDraggedStageId(null);
+    setDragOverStageId(null);
   };
 
   const handleAddField = () => {
@@ -95,8 +123,18 @@ export default function SettingsModal({ onClose }: Props) {
               {/* Existing stages */}
               <div className="space-y-2">
                 {sortedStages.map((stage) => (
-                  <div key={stage.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <GripVertical className="w-4 h-4 text-gray-400" />
+                  <div
+                    key={stage.id}
+                    draggable
+                    onDragStart={() => handleStageDragStart(stage.id)}
+                    onDragOver={(e) => handleStageDragOver(e, stage.id)}
+                    onDrop={() => handleStageDrop(stage.id)}
+                    onDragEnd={() => { setDraggedStageId(null); setDragOverStageId(null); }}
+                    className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                      dragOverStageId === stage.id ? 'bg-blue-50 border border-blue-300' : 'bg-gray-50'
+                    }`}
+                  >
+                    <GripVertical className="w-4 h-4 text-gray-400 cursor-grab" />
                     <input
                       type="color"
                       value={stage.color}
