@@ -8,7 +8,8 @@ export function openProspectPopout(contact: Contact, stage?: PipelineStage) {
 
   // Close any existing prospect popout
   const existingKey = 'prospect-popout';
-  const existing = (window as Record<string, unknown>)[existingKey] as Window | undefined;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const existing = (window as any)[existingKey] as Window | undefined;
   if (existing && !existing.closed) {
     existing.close();
   }
@@ -24,7 +25,8 @@ export function openProspectPopout(contact: Contact, stage?: PipelineStage) {
     return;
   }
 
-  (window as Record<string, unknown>)[existingKey] = popup;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (window as any)[existingKey] = popup;
 
   const stageColor = stage?.color || '#6366f1';
   const stageName = stage?.name || '';

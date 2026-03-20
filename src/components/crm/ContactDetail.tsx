@@ -13,7 +13,6 @@ import {
   Building2,
   Check,
   Globe,
-  PinOff,
   Pin,
 } from 'lucide-react';
 import { useCrmStore } from '../../store/useCrmStore';
