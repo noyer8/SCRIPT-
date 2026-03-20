@@ -13,9 +13,12 @@ import {
   Building2,
   Check,
   Globe,
+  PinOff,
+  Pin,
 } from 'lucide-react';
 import { useCrmStore } from '../../store/useCrmStore';
 import type { Activity } from '../../store/useCrmStore';
+import { openProspectPopout } from '../../utils/openProspectPopout';
 
 const ACTIVITY_ICONS: Record<Activity['type'], React.ElementType> = {
   call: Phone,
@@ -149,6 +152,17 @@ export default function ContactDetail() {
             </div>
           </div>
           <div className="flex items-center gap-1">
+            <button
+              onClick={() => {
+                const stage = stages.find((s) => s.id === contact.stageId);
+                openProspectPopout(contact, stage);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+              title="Épingler dans une fenêtre flottante"
+            >
+              <Pin className="w-4 h-4" />
+              Épingler
+            </button>
             {editMode ? (
               <button onClick={saveEdit} className="p-2 hover:bg-green-50 rounded-lg text-green-600">
                 <Save className="w-5 h-5" />
