@@ -4,7 +4,6 @@ import type { Contact, PipelineStage } from '../store/useCrmStore';
 let currentPipWindow: any = null;
 
 function buildHtml(contact: Contact, stage?: PipelineStage): string {
-  const stageColor = stage?.color || '#6366f1';
   const stageName = stage?.name || '';
 
   const facebookLink = contact.facebookUrl
