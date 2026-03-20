@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useCrmStore } from '../../store/useCrmStore';
 import type { Activity } from '../../store/useCrmStore';
+import { openProspectPopout } from '../../utils/openProspectPopout';
 
 const ACTIVITY_ICONS: Record<Activity['type'], React.ElementType> = {
   call: Phone,
@@ -153,7 +154,15 @@ export default function ContactDetail() {
           </div>
           <div className="flex items-center gap-1">
             <button
-              onClick={() => setPinnedContact(pinnedContactId === contact.id ? null : contact.id)}
+              onClick={() => {
+                if (pinnedContactId === contact.id) {
+                  setPinnedContact(null);
+                } else {
+                  setPinnedContact(contact.id);
+                  const s = stages.find((st) => st.id === contact.stageId);
+                  openProspectPopout(contact, s);
+                }
+              }}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg transition-colors ${
                 pinnedContactId === contact.id
                   ? 'text-amber-700 bg-amber-100'

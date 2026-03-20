@@ -1,13 +1,20 @@
 import { Building2, Phone, Mail, Pin } from 'lucide-react';
 import { useCrmStore } from '../../store/useCrmStore';
 import type { Contact } from '../../store/useCrmStore';
+import { openProspectPopout } from '../../utils/openProspectPopout';
 
 export default function ContactCard({ contact }: { contact: Contact }) {
-  const { setSelectedContact, setPinnedContact, pinnedContactId } = useCrmStore();
+  const { setSelectedContact, setPinnedContact, pinnedContactId, stages } = useCrmStore();
 
   const handlePin = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setPinnedContact(pinnedContactId === contact.id ? null : contact.id);
+    if (pinnedContactId === contact.id) {
+      setPinnedContact(null);
+    } else {
+      setPinnedContact(contact.id);
+      const stage = stages.find((s) => s.id === contact.stageId);
+      openProspectPopout(contact, stage);
+    }
   };
 
   return (
