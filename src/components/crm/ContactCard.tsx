@@ -1,4 +1,4 @@
-import { Building2, Phone, Mail, Pin } from 'lucide-react';
+import { Building2, Phone, Mail, Pin, Globe } from 'lucide-react';
 import { useCrmStore } from '../../store/useCrmStore';
 import type { Contact } from '../../store/useCrmStore';
 import { openProspectPopout } from '../../utils/openProspectPopout';
@@ -55,6 +55,20 @@ export default function ContactCard({ contact }: { contact: Contact }) {
         <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
           <Mail className="w-3 h-3" />
           <span className="truncate">{contact.email}</span>
+        </div>
+      )}
+      {contact.facebookUrl && (
+        <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
+          <Globe className="w-3 h-3 text-blue-500" />
+          <a
+            href={contact.facebookUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="text-blue-500 hover:underline truncate"
+          >
+            {contact.facebookUrl.replace(/^https?:\/\/(www\.)?/, '')}
+          </a>
         </div>
       )}
 
