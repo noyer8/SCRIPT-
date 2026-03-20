@@ -74,6 +74,7 @@ interface CrmState {
   customFields: CustomField[];
   activities: Activity[];
   selectedContactId: string | null;
+  pinnedContactId: string | null;
   searchQuery: string;
   filterStageId: string | null;
   filterTag: string | null;
@@ -85,6 +86,7 @@ interface CrmState {
   deleteContact: (id: string) => void;
   moveContact: (id: string, stageId: string) => void;
   setSelectedContact: (id: string | null) => void;
+  setPinnedContact: (id: string | null) => void;
   addTagToContact: (id: string, tag: string) => void;
   removeTagFromContact: (id: string, tag: string) => void;
 
@@ -122,6 +124,7 @@ export const useCrmStore = create<CrmState>()(
       customFields: DEFAULT_FIELDS,
       activities: [],
       selectedContactId: null,
+      pinnedContactId: null,
       searchQuery: '',
       filterStageId: null,
       filterTag: null,
@@ -164,6 +167,7 @@ export const useCrmStore = create<CrmState>()(
       },
 
       setSelectedContact: (id) => set({ selectedContactId: id }),
+      setPinnedContact: (id) => set({ pinnedContactId: id }),
 
       addTagToContact: (id, tag) => {
         const contact = get().contacts.find((c) => c.id === id);

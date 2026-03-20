@@ -1,15 +1,13 @@
 import { Building2, Phone, Mail, Pin } from 'lucide-react';
 import { useCrmStore } from '../../store/useCrmStore';
 import type { Contact } from '../../store/useCrmStore';
-import { openProspectPopout } from '../../utils/openProspectPopout';
 
 export default function ContactCard({ contact }: { contact: Contact }) {
-  const { setSelectedContact, stages } = useCrmStore();
+  const { setSelectedContact, setPinnedContact, pinnedContactId } = useCrmStore();
 
   const handlePin = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const stage = stages.find((s) => s.id === contact.stageId);
-    openProspectPopout(contact, stage);
+    setPinnedContact(pinnedContactId === contact.id ? null : contact.id);
   };
 
   return (
@@ -23,8 +21,12 @@ export default function ContactCard({ contact }: { contact: Contact }) {
         </div>
         <button
           onClick={handlePin}
-          className="opacity-0 group-hover:opacity-100 p-1 hover:bg-amber-50 rounded text-amber-500 transition-all"
-          title="Épingler dans une fenêtre flottante"
+          className={`opacity-0 group-hover:opacity-100 p-1 rounded transition-all ${
+            pinnedContactId === contact.id
+              ? 'opacity-100 bg-amber-100 text-amber-600'
+              : 'hover:bg-amber-50 text-amber-500'
+          }`}
+          title="Épingler en overlay"
         >
           <Pin className="w-3.5 h-3.5" />
         </button>

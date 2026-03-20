@@ -17,7 +17,6 @@ import {
 } from 'lucide-react';
 import { useCrmStore } from '../../store/useCrmStore';
 import type { Activity } from '../../store/useCrmStore';
-import { openProspectPopout } from '../../utils/openProspectPopout';
 
 const ACTIVITY_ICONS: Record<Activity['type'], React.ElementType> = {
   call: Phone,
@@ -49,6 +48,8 @@ export default function ContactDetail() {
     getContactActivities,
     addTagToContact,
     removeTagFromContact,
+    setPinnedContact,
+    pinnedContactId,
   } = useCrmStore();
 
   const contact = contacts.find((c) => c.id === selectedContactId);
@@ -152,15 +153,16 @@ export default function ContactDetail() {
           </div>
           <div className="flex items-center gap-1">
             <button
-              onClick={() => {
-                const stage = stages.find((s) => s.id === contact.stageId);
-                openProspectPopout(contact, stage);
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
-              title="Épingler dans une fenêtre flottante"
+              onClick={() => setPinnedContact(pinnedContactId === contact.id ? null : contact.id)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                pinnedContactId === contact.id
+                  ? 'text-amber-700 bg-amber-100'
+                  : 'text-amber-600 hover:bg-amber-50'
+              }`}
+              title="Épingler en overlay"
             >
               <Pin className="w-4 h-4" />
-              Épingler
+              {pinnedContactId === contact.id ? 'Désépingler' : 'Épingler'}
             </button>
             {editMode ? (
               <button onClick={saveEdit} className="p-2 hover:bg-green-50 rounded-lg text-green-600">
