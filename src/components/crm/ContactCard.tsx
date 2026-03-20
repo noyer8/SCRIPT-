@@ -1,10 +1,12 @@
-import { Building2, Phone, Mail, Pin, Globe } from 'lucide-react';
+import { Building2, Phone, Mail, Pin, Globe, Check } from 'lucide-react';
+import { useState } from 'react';
 import { useCrmStore } from '../../store/useCrmStore';
 import type { Contact } from '../../store/useCrmStore';
 import { openProspectPopout } from '../../utils/openProspectPopout';
 
 export default function ContactCard({ contact }: { contact: Contact }) {
   const { setSelectedContact, setPinnedContact, pinnedContactId, stages } = useCrmStore();
+  const [phoneCopied, setPhoneCopied] = useState(false);
 
   const handlePin = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -46,9 +48,18 @@ export default function ContactCard({ contact }: { contact: Contact }) {
         </div>
       )}
       {contact.phone && (
-        <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
-          <Phone className="w-3 h-3" />
-          <span>{contact.phone}</span>
+        <div
+          className="flex items-center gap-1.5 text-xs text-gray-500 mb-1 cursor-pointer hover:text-green-600 transition-colors"
+          onClick={(e) => {
+            e.stopPropagation();
+            navigator.clipboard.writeText(contact.phone);
+            setPhoneCopied(true);
+            setTimeout(() => setPhoneCopied(false), 1500);
+          }}
+          title="Cliquer pour copier"
+        >
+          {phoneCopied ? <Check className="w-3 h-3 text-green-500" /> : <Phone className="w-3 h-3" />}
+          <span>{phoneCopied ? 'Copié !' : contact.phone}</span>
         </div>
       )}
       {contact.email && (

@@ -58,6 +58,7 @@ export default function ContactDetail() {
   const [newTag, setNewTag] = useState('');
   const [newActivity, setNewActivity] = useState({ type: 'note' as Activity['type'], content: '' });
   const [editMode, setEditMode] = useState(false);
+  const [phoneCopied, setPhoneCopied] = useState(false);
   const [editForm, setEditForm] = useState({ firstName: '', lastName: '', company: '', email: '', phone: '', facebookUrl: '', stageId: '' });
 
   if (!contact) return null;
@@ -274,9 +275,17 @@ export default function ContactDetail() {
                       </div>
                     )}
                     {contact.phone && (
-                      <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                        <Phone className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm">{contact.phone}</span>
+                      <div
+                        className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-green-50 transition-colors"
+                        onClick={() => {
+                          navigator.clipboard.writeText(contact.phone);
+                          setPhoneCopied(true);
+                          setTimeout(() => setPhoneCopied(false), 1500);
+                        }}
+                        title="Cliquer pour copier"
+                      >
+                        {phoneCopied ? <Check className="w-4 h-4 text-green-500" /> : <Phone className="w-4 h-4 text-gray-400" />}
+                        <span className="text-sm">{phoneCopied ? 'Copié !' : contact.phone}</span>
                       </div>
                     )}
                     {contact.facebookUrl && (
