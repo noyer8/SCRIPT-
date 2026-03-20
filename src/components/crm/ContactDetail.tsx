@@ -12,6 +12,7 @@ import {
   Tag,
   Building2,
   Check,
+  Globe,
 } from 'lucide-react';
 import { useCrmStore } from '../../store/useCrmStore';
 import type { Activity } from '../../store/useCrmStore';
@@ -53,7 +54,7 @@ export default function ContactDetail() {
   const [newTag, setNewTag] = useState('');
   const [newActivity, setNewActivity] = useState({ type: 'note' as Activity['type'], content: '' });
   const [editMode, setEditMode] = useState(false);
-  const [editForm, setEditForm] = useState({ firstName: '', lastName: '', company: '', email: '', phone: '', stageId: '' });
+  const [editForm, setEditForm] = useState({ firstName: '', lastName: '', company: '', email: '', phone: '', facebookUrl: '', stageId: '' });
 
   if (!contact) return null;
 
@@ -67,6 +68,7 @@ export default function ContactDetail() {
       company: contact.company,
       email: contact.email,
       phone: contact.phone,
+      facebookUrl: contact.facebookUrl,
       stageId: contact.stageId,
     });
     setEditMode(true);
@@ -212,6 +214,15 @@ export default function ContactDetail() {
                       />
                     </div>
                     <div>
+                      <label className="text-xs font-medium text-gray-500">Page Facebook</label>
+                      <input
+                        value={editForm.facebookUrl}
+                        onChange={(e) => setEditForm({ ...editForm, facebookUrl: e.target.value })}
+                        className="w-full px-3 py-2 border rounded-lg text-sm mt-1"
+                        placeholder="https://facebook.com/..."
+                      />
+                    </div>
+                    <div>
                       <label className="text-xs font-medium text-gray-500">Étape</label>
                       <select
                         value={editForm.stageId}
@@ -242,6 +253,14 @@ export default function ContactDetail() {
                       <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                         <Phone className="w-4 h-4 text-gray-400" />
                         <span className="text-sm">{contact.phone}</span>
+                      </div>
+                    )}
+                    {contact.facebookUrl && (
+                      <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                        <Globe className="w-4 h-4 text-blue-500" />
+                        <a href={contact.facebookUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline truncate">
+                          {contact.facebookUrl}
+                        </a>
                       </div>
                     )}
                   </>
