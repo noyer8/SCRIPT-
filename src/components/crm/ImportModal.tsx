@@ -16,6 +16,7 @@ const CRM_FIELDS = [
   { key: 'company', label: 'Entreprise' },
   { key: 'email', label: 'Email' },
   { key: 'phone', label: 'Téléphone' },
+  { key: 'facebookUrl', label: 'Page Facebook' },
   { key: 'stage', label: 'Étape du pipeline' },
   { key: 'tags', label: 'Tags (séparés par virgules)' },
   { key: '_skip', label: '-- Ignorer cette colonne --' },
@@ -66,6 +67,7 @@ function autoMapColumns(headers: string[], _stageNames: string[], customFieldNam
     company: [/entreprise/i, /soci[eé]t[eé]/i, /company/i, /org/i],
     email: [/e-?mail/i, /courriel/i, /mail/i],
     phone: [/t[eé]l[eé]phone/i, /phone/i, /mobile/i, /num[eé]ro/i, /tel/i],
+    facebookUrl: [/facebook/i, /fb/i, /page\s*facebook/i],
     stage: [/[eé]tape/i, /stage/i, /statut/i, /status/i, /phase/i, /pipeline/i],
     tags: [/tags?/i, /[eé]tiquettes?/i, /labels?/i, /cat[eé]gorie/i],
   };
@@ -183,6 +185,7 @@ export default function ImportModal({ onClose }: Props) {
         company: data.company || '',
         email: data.email || '',
         phone: data.phone || '',
+        facebookUrl: data.facebookUrl || '',
         stageId,
       });
 

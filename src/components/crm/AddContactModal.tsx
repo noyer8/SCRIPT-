@@ -15,6 +15,7 @@ export default function AddContactModal({ defaultStageId, onClose }: Props) {
     company: '',
     email: '',
     phone: '',
+    facebookUrl: '',
     stageId: defaultStageId,
   });
 
@@ -85,6 +86,17 @@ export default function AddContactModal({ defaultStageId, onClose }: Props) {
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Page Facebook</label>
+            <input
+              type="url"
+              value={form.facebookUrl}
+              onChange={(e) => setForm({ ...form, facebookUrl: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="https://facebook.com/..."
             />
           </div>
 

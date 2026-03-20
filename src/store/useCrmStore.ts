@@ -38,6 +38,7 @@ export interface Contact {
   company: string;
   email: string;
   phone: string;
+  facebookUrl: string;
   stageId: string;
   customFields: Record<string, string>;
   tags: string[];
@@ -268,7 +269,8 @@ export const useCrmStore = create<CrmState>()(
               c.lastName.toLowerCase().includes(q) ||
               c.company.toLowerCase().includes(q) ||
               c.email.toLowerCase().includes(q) ||
-              c.phone.includes(q)
+              c.phone.includes(q) ||
+              c.facebookUrl.toLowerCase().includes(q)
             );
           }
           return true;
