@@ -5,7 +5,7 @@ import type { Contact } from '../../store/useCrmStore';
 import { openProspectPopout } from '../../utils/openProspectPopout';
 
 export default function ContactCard({ contact }: { contact: Contact }) {
-  const { setSelectedContact, setPinnedContact, pinnedContactId, stages } = useCrmStore();
+  const { setSelectedContact, setPinnedContact, pinnedContactId, stages, updateContact, deleteContact } = useCrmStore();
   const [phoneCopied, setPhoneCopied] = useState(false);
 
   const handlePin = (e: React.MouseEvent) => {
@@ -40,6 +40,39 @@ export default function ContactCard({ contact }: { contact: Contact }) {
           <Pin className="w-3.5 h-3.5" />
         </button>
       </div>
+
+      {/* Missed calls tracker */}
+      {contact.phone && (
+        <div className="flex items-center gap-1 mb-2" onClick={(e) => e.stopPropagation()}>
+          <Phone className="w-3 h-3 text-gray-400 mr-0.5" />
+          {[0, 1, 2].map((i) => (
+            <button
+              key={i}
+              onClick={() => {
+                const newCount = i + 1;
+                if (newCount >= 3) {
+                  if (confirm(`${contact.firstName} ${contact.lastName} — 3 appels sans réponse. Supprimer ce prospect ?`)) {
+                    deleteContact(contact.id);
+                  }
+                } else {
+                  updateContact(contact.id, { missedCalls: newCount });
+                }
+              }}
+              className="transition-all"
+              title={`Appel ${i + 1} sans réponse`}
+            >
+              <div
+                className={`w-3.5 h-3.5 rounded-full border-2 transition-colors ${
+                  i < (contact.missedCalls || 0)
+                    ? 'bg-red-400 border-red-400'
+                    : 'border-gray-300 hover:border-red-300'
+                }`}
+              />
+            </button>
+          ))}
+          <span className="text-[10px] text-gray-400 ml-1">{contact.missedCalls || 0}/3</span>
+        </div>
+      )}
 
       {contact.company && (
         <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">

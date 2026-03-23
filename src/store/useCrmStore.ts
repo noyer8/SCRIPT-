@@ -42,6 +42,7 @@ export interface Contact {
   stageId: string;
   customFields: Record<string, string>;
   tags: string[];
+  missedCalls: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -81,7 +82,7 @@ interface CrmState {
   view: 'pipeline' | 'list';
 
   // Contacts
-  addContact: (contact: Omit<Contact, 'id' | 'createdAt' | 'updatedAt' | 'customFields' | 'tags'>) => string;
+  addContact: (contact: Omit<Contact, 'id' | 'createdAt' | 'updatedAt' | 'customFields' | 'tags' | 'missedCalls'>) => string;
   updateContact: (id: string, updates: Partial<Contact>) => void;
   deleteContact: (id: string) => void;
   moveContact: (id: string, stageId: string) => void;
@@ -139,6 +140,7 @@ export const useCrmStore = create<CrmState>()(
           id,
           customFields: {},
           tags: [],
+          missedCalls: 0,
           createdAt: now,
           updatedAt: now,
         };
