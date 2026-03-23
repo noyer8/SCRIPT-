@@ -4,7 +4,7 @@ import { useCrmStore } from '../../store/useCrmStore';
 import type { Contact } from '../../store/useCrmStore';
 import { openProspectPopout } from '../../utils/openProspectPopout';
 
-export default function ContactCard({ contact }: { contact: Contact }) {
+export default function ContactCard({ contact, isFirstStage = false }: { contact: Contact; isFirstStage?: boolean }) {
   const { setSelectedContact, setPinnedContact, pinnedContactId, stages, updateContact, deleteContact } = useCrmStore();
   const [phoneCopied, setPhoneCopied] = useState(false);
 
@@ -41,35 +41,44 @@ export default function ContactCard({ contact }: { contact: Contact }) {
         </button>
       </div>
 
-      {/* Missed calls tracker */}
-      {contact.phone && (
+      {/* Missed calls tracker - only in first stage */}
+      {isFirstStage && contact.phone && (
         <div className="flex items-center gap-1 mb-2" onClick={(e) => e.stopPropagation()}>
           <Phone className="w-3 h-3 text-gray-400 mr-0.5" />
-          {[0, 1, 2].map((i) => (
-            <button
-              key={i}
-              onClick={() => {
-                const newCount = i + 1;
-                if (newCount >= 3) {
-                  if (confirm(`${contact.firstName} ${contact.lastName} — 3 appels sans réponse. Supprimer ce prospect ?`)) {
-                    deleteContact(contact.id);
+          {[0, 1, 2].map((i) => {
+            const current = contact.missedCalls || 0;
+            const isFilled = i < current;
+            return (
+              <button
+                key={i}
+                onClick={() => {
+                  if (isFilled && i === current - 1) {
+                    // clicking the last filled dot unchecks it
+                    updateContact(contact.id, { missedCalls: i });
+                  } else if (!isFilled) {
+                    const newCount = i + 1;
+                    if (newCount >= 3) {
+                      if (confirm(`${contact.firstName} ${contact.lastName} — 3 appels sans réponse. Supprimer ce prospect ?`)) {
+                        deleteContact(contact.id);
+                      }
+                    } else {
+                      updateContact(contact.id, { missedCalls: newCount });
+                    }
                   }
-                } else {
-                  updateContact(contact.id, { missedCalls: newCount });
-                }
-              }}
-              className="transition-all"
-              title={`Appel ${i + 1} sans réponse`}
-            >
-              <div
-                className={`w-3.5 h-3.5 rounded-full border-2 transition-colors ${
-                  i < (contact.missedCalls || 0)
-                    ? 'bg-red-400 border-red-400'
-                    : 'border-gray-300 hover:border-red-300'
-                }`}
-              />
-            </button>
-          ))}
+                }}
+                className="transition-all"
+                title={isFilled ? 'Cliquer pour décocher' : `Appel ${i + 1} sans réponse`}
+              >
+                <div
+                  className={`w-3.5 h-3.5 rounded-full border-2 transition-colors ${
+                    isFilled
+                      ? 'bg-red-400 border-red-400'
+                      : 'border-gray-300 hover:border-red-300'
+                  }`}
+                />
+              </button>
+            );
+          })}
           <span className="text-[10px] text-gray-400 ml-1">{contact.missedCalls || 0}/3</span>
         </div>
       )}
