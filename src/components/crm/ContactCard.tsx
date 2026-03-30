@@ -75,7 +75,7 @@ export default function ContactCard({ contact, isFirstStage = false }: { contact
       {isFirstStage && contact.phone && (
         <div className="flex items-center gap-1 mb-2" onClick={(e) => e.stopPropagation()}>
           <Phone className="w-3 h-3 text-gray-400 mr-0.5" />
-          {[0, 1, 2].map((i) => {
+          {[0, 1].map((i) => {
             const current = contact.missedCalls || 0;
             const isFilled = i < current;
             return (
@@ -86,8 +86,8 @@ export default function ContactCard({ contact, isFirstStage = false }: { contact
                     updateContact(contact.id, { missedCalls: i });
                   } else if (!isFilled) {
                     const newCount = i + 1;
-                    if (newCount >= 3) {
-                      if (confirm(`${contact.firstName} ${contact.lastName} — 3 appels sans réponse. Supprimer ce prospect ?`)) {
+                    if (newCount >= 2) {
+                      if (confirm(`${contact.firstName} ${contact.lastName} — 2 appels sans réponse. Supprimer ce prospect ?`)) {
                         deleteContact(contact.id);
                       }
                     } else {
@@ -108,7 +108,7 @@ export default function ContactCard({ contact, isFirstStage = false }: { contact
               </button>
             );
           })}
-          <span className="text-[10px] text-gray-400 ml-1">{contact.missedCalls || 0}/3</span>
+          <span className="text-[10px] text-gray-400 ml-1">{contact.missedCalls || 0}/2</span>
         </div>
       )}
 
