@@ -43,6 +43,9 @@ export interface Contact {
   customFields: Record<string, string>;
   tags: string[];
   missedCalls: number;
+  callbackDate: string;
+  callbackTime: string;
+  callbackNote: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -82,7 +85,7 @@ interface CrmState {
   view: 'pipeline' | 'list';
 
   // Contacts
-  addContact: (contact: Omit<Contact, 'id' | 'createdAt' | 'updatedAt' | 'customFields' | 'tags' | 'missedCalls'>) => string;
+  addContact: (contact: Omit<Contact, 'id' | 'createdAt' | 'updatedAt' | 'customFields' | 'tags' | 'missedCalls' | 'callbackDate' | 'callbackTime' | 'callbackNote'>) => string;
   updateContact: (id: string, updates: Partial<Contact>) => void;
   deleteContact: (id: string) => void;
   moveContact: (id: string, stageId: string) => void;
@@ -144,6 +147,9 @@ export const useCrmStore = create<CrmState>()(
           customFields: {},
           tags: [],
           missedCalls: 0,
+          callbackDate: '',
+          callbackTime: '',
+          callbackNote: '',
           createdAt: now,
           updatedAt: now,
         };
