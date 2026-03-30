@@ -1,4 +1,4 @@
-import { Building2, Phone, Mail, Pin, Globe, Check, CalendarClock, MessageSquare, X } from 'lucide-react';
+import { Building2, Phone, Mail, Pin, Globe, Check, CalendarClock } from 'lucide-react';
 import { useState } from 'react';
 import { useCrmStore } from '../../store/useCrmStore';
 import type { Contact } from '../../store/useCrmStore';
@@ -154,66 +154,16 @@ export default function ContactCard({ contact, isFirstStage = false }: { contact
         </div>
       )}
 
-      {/* Callback section - shown when a callback is set */}
-      {(contact.callbackDate || contact.callbackNote) ? (
-        <div className="mt-2 pt-2 border-t border-gray-100 space-y-1.5" onClick={(e) => e.stopPropagation()}>
-          <div className="flex items-center gap-1.5">
+      {/* Callback info - read only, shown when set */}
+      {contact.callbackDate && (
+        <div className="mt-2 pt-2 border-t border-gray-100">
+          <div className="flex items-center gap-1.5 text-[10px]">
             <CalendarClock className={`w-3 h-3 flex-shrink-0 ${callbackIsToday ? 'text-yellow-600' : callbackIsPast ? 'text-red-500' : 'text-gray-400'}`} />
-            <input
-              type="date"
-              value={contact.callbackDate || ''}
-              onChange={(e) => updateContact(contact.id, { callbackDate: e.target.value })}
-              className={`text-xs px-1.5 py-0.5 border rounded w-[120px] ${
-                callbackIsToday
-                  ? 'border-yellow-400 bg-yellow-100 font-semibold text-yellow-800'
-                  : callbackIsPast
-                    ? 'border-red-300 bg-red-50 text-red-700'
-                    : 'border-gray-200'
-              }`}
-            />
-            <input
-              type="time"
-              value={contact.callbackTime || ''}
-              onChange={(e) => updateContact(contact.id, { callbackTime: e.target.value })}
-              className="text-xs px-1.5 py-0.5 border border-gray-200 rounded w-[80px]"
-            />
-            <button
-              onClick={() => updateContact(contact.id, { callbackDate: '', callbackTime: '', callbackNote: '' })}
-              className="text-gray-300 hover:text-red-400 ml-auto"
-              title="Supprimer le rappel"
-            >
-              <X className="w-3 h-3" />
-            </button>
+            {callbackIsToday && <span className="font-bold text-yellow-700">Rappeler aujourd'hui{contact.callbackTime ? ` à ${contact.callbackTime}` : ''}</span>}
+            {callbackIsPast && <span className="font-bold text-red-600">En retard ! ({formatDateFr(contact.callbackDate)})</span>}
+            {!callbackIsToday && !callbackIsPast && <span className="text-gray-400">Rappel le {formatDateFr(contact.callbackDate)}{contact.callbackTime ? ` à ${contact.callbackTime}` : ''}</span>}
           </div>
-          <div className="flex items-start gap-1.5">
-            <MessageSquare className="w-3 h-3 text-gray-400 mt-0.5 flex-shrink-0" />
-            <textarea
-              value={contact.callbackNote || ''}
-              onChange={(e) => updateContact(contact.id, { callbackNote: e.target.value })}
-              placeholder="Notes de l'appel..."
-              rows={2}
-              className="text-xs px-1.5 py-0.5 border border-gray-200 rounded w-full resize-none"
-            />
-          </div>
-          {contact.callbackDate && (
-            <div className="text-[10px] text-gray-400">
-              {callbackIsToday && <span className="font-bold text-yellow-700">Rappeler aujourd'hui{contact.callbackTime ? ` à ${contact.callbackTime}` : ''}</span>}
-              {callbackIsPast && <span className="font-bold text-red-600">En retard ! ({formatDateFr(contact.callbackDate)})</span>}
-              {!callbackIsToday && !callbackIsPast && <span>Rappel le {formatDateFr(contact.callbackDate)}{contact.callbackTime ? ` à ${contact.callbackTime}` : ''}</span>}
-            </div>
-          )}
         </div>
-      ) : (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            updateContact(contact.id, { callbackDate: new Date().toISOString().split('T')[0] });
-          }}
-          className="mt-2 flex items-center gap-1 text-[10px] text-gray-400 hover:text-blue-500 transition-colors"
-        >
-          <CalendarClock className="w-3 h-3" />
-          + Rappel
-        </button>
       )}
 
       {contact.tags.length > 0 && (

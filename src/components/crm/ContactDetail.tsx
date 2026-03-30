@@ -14,6 +14,7 @@ import {
   Check,
   Globe,
   Pin,
+  CalendarClock,
 } from 'lucide-react';
 import { useCrmStore } from '../../store/useCrmStore';
 import type { Activity } from '../../store/useCrmStore';
@@ -298,6 +299,47 @@ export default function ContactDetail() {
                     )}
                   </>
                 )}
+              </div>
+
+              {/* Callback / Rappel */}
+              <div>
+                <h3 className="text-sm font-medium text-gray-700 mb-2">Rappel</h3>
+                <div className="space-y-2 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <CalendarClock className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    <input
+                      type="date"
+                      value={contact.callbackDate || ''}
+                      onChange={(e) => updateContact(contact.id, { callbackDate: e.target.value })}
+                      className="px-3 py-1.5 border rounded-lg text-sm flex-1"
+                    />
+                    <input
+                      type="time"
+                      value={contact.callbackTime || ''}
+                      onChange={(e) => updateContact(contact.id, { callbackTime: e.target.value })}
+                      className="px-3 py-1.5 border rounded-lg text-sm w-28"
+                    />
+                    {(contact.callbackDate || contact.callbackTime || contact.callbackNote) && (
+                      <button
+                        onClick={() => updateContact(contact.id, { callbackDate: '', callbackTime: '', callbackNote: '' })}
+                        className="p-1 text-gray-300 hover:text-red-400"
+                        title="Supprimer le rappel"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <MessageSquare className="w-4 h-4 text-gray-400 mt-2 flex-shrink-0" />
+                    <textarea
+                      value={contact.callbackNote || ''}
+                      onChange={(e) => updateContact(contact.id, { callbackNote: e.target.value })}
+                      placeholder="Notes de l'appel..."
+                      rows={2}
+                      className="flex-1 px-3 py-1.5 border rounded-lg text-sm resize-none"
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Tags */}
