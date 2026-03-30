@@ -1,7 +1,6 @@
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import ScriptFlowPage from './components/ScriptFlowPage';
 import CrmPage from './components/crm/CrmPage';
-
 function App() {
   return (
     <HashRouter>

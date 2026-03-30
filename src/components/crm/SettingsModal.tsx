@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { X, Plus, Trash2, GripVertical } from 'lucide-react';
+import { X, Plus, Trash2, GripVertical, RefreshCw, Upload, Download, Check, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useCrmStore } from '../../store/useCrmStore';
-import type { FieldType } from '../../store/useCrmStore';
+import type { FieldType, Contact, PipelineStage, CustomField, Activity } from '../../store/useCrmStore';
+import { getSyncConfig, saveSyncConfig, pushToGist, pullFromGist, validateToken, findExistingGist } from '../../utils/gistSync';
 
 interface Props {
   onClose: () => void;
@@ -20,6 +21,7 @@ const FIELD_TYPES: { value: FieldType; label: string }[] = [
 ];
 
 export default function SettingsModal({ onClose }: Props) {
+  const store = useCrmStore();
   const {
     stages,
     customFields,
@@ -30,9 +32,9 @@ export default function SettingsModal({ onClose }: Props) {
     updateCustomField,
     deleteCustomField,
     reorderStages,
-  } = useCrmStore();
+  } = store;
 
-  const [tab, setTab] = useState<'stages' | 'fields'>('stages');
+  const [tab, setTab] = useState<'stages' | 'fields' | 'sync'>('stages');
   const [newStageName, setNewStageName] = useState('');
   const [newStageColor, setNewStageColor] = useState('#6366f1');
   const [newFieldName, setNewFieldName] = useState('');
@@ -40,6 +42,13 @@ export default function SettingsModal({ onClose }: Props) {
   const [newFieldOptions, setNewFieldOptions] = useState('');
   const [draggedStageId, setDraggedStageId] = useState<string | null>(null);
   const [dragOverStageId, setDragOverStageId] = useState<string | null>(null);
+
+  // Sync state
+  const [syncConfig, setSyncConfig] = useState(getSyncConfig);
+  const [tokenInput, setTokenInput] = useState(syncConfig.githubToken);
+  const [showToken, setShowToken] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'pushing' | 'pulling' | 'validating'>('idle');
+  const [syncMessage, setSyncMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const sortedStages = [...stages].sort((a, b) => a.order - b.order);
 
@@ -87,6 +96,86 @@ export default function SettingsModal({ onClose }: Props) {
     }
   };
 
+  const handleSaveToken = async () => {
+    setSyncStatus('validating');
+    setSyncMessage(null);
+    const valid = await validateToken(tokenInput);
+    if (valid) {
+      // Auto-find existing CRM gist
+      const existingGistId = await findExistingGist(tokenInput);
+      const newConfig = { ...syncConfig, githubToken: tokenInput, gistId: existingGistId ?? syncConfig.gistId };
+      saveSyncConfig(newConfig);
+      setSyncConfig(newConfig);
+      if (existingGistId) {
+        setSyncMessage({ type: 'success', text: 'Token valide ! Gist CRM trouvé automatiquement.' });
+      } else {
+        setSyncMessage({ type: 'success', text: 'Token valide et sauvegardé !' });
+      }
+    } else {
+      setSyncMessage({ type: 'error', text: 'Token invalide. Vérifie qu\'il a les permissions "gist".' });
+    }
+    setSyncStatus('idle');
+  };
+
+  const handlePush = async () => {
+    setSyncStatus('pushing');
+    setSyncMessage(null);
+    try {
+      const state = useCrmStore.getState();
+      const data = {
+        contacts: state.contacts,
+        stages: state.stages,
+        customFields: state.customFields,
+        activities: state.activities,
+      };
+      const gistId = await pushToGist(syncConfig.githubToken, syncConfig.gistId, data);
+      const now = new Date().toISOString();
+      const newConfig = { ...syncConfig, gistId, lastSyncAt: now };
+      saveSyncConfig(newConfig);
+      setSyncConfig(newConfig);
+      setSyncMessage({ type: 'success', text: `Données envoyées ! (${state.contacts.length} contacts)` });
+    } catch (e: unknown) {
+      setSyncMessage({ type: 'error', text: `Erreur : ${e instanceof Error ? e.message : 'Erreur inconnue'}` });
+    }
+    setSyncStatus('idle');
+  };
+
+  const handlePull = async () => {
+    if (!syncConfig.gistId) {
+      setSyncMessage({ type: 'error', text: 'Aucun Gist configuré. Fais d\'abord un envoi.' });
+      return;
+    }
+    setSyncStatus('pulling');
+    setSyncMessage(null);
+    try {
+      const data = await pullFromGist(syncConfig.githubToken, syncConfig.gistId) as {
+        contacts?: Contact[];
+        stages?: PipelineStage[];
+        customFields?: CustomField[];
+        activities?: Activity[];
+      };
+      store.replaceData(data);
+      const now = new Date().toISOString();
+      const newConfig = { ...syncConfig, lastSyncAt: now };
+      saveSyncConfig(newConfig);
+      setSyncConfig(newConfig);
+      const contactCount = Array.isArray(data.contacts) ? data.contacts.length : 0;
+      setSyncMessage({ type: 'success', text: `Données récupérées ! (${contactCount} contacts)` });
+    } catch (e: unknown) {
+      setSyncMessage({ type: 'error', text: `Erreur : ${e instanceof Error ? e.message : 'Erreur inconnue'}` });
+    }
+    setSyncStatus('idle');
+  };
+
+  const handleDisconnect = () => {
+    saveSyncConfig({ githubToken: '', gistId: null, lastSyncAt: null });
+    setSyncConfig({ githubToken: '', gistId: null, lastSyncAt: null });
+    setTokenInput('');
+    setSyncMessage(null);
+  };
+
+  const isTokenSaved = syncConfig.githubToken.length > 0;
+
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
@@ -114,6 +203,15 @@ export default function SettingsModal({ onClose }: Props) {
             }`}
           >
             Champs personnalisés
+          </button>
+          <button
+            onClick={() => setTab('sync')}
+            className={`px-4 py-3 text-sm font-medium border-b-2 flex items-center gap-1.5 ${
+              tab === 'sync' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500'
+            }`}
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            Synchronisation
           </button>
         </div>
 
@@ -248,6 +346,108 @@ export default function SettingsModal({ onClose }: Props) {
                   Ajouter le champ
                 </button>
               </div>
+            </div>
+          )}
+
+          {tab === 'sync' && (
+            <div className="space-y-6">
+              {/* Explanation */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
+                <p className="font-medium mb-1">Synchronise ton CRM entre tes appareils</p>
+                <p>Tes contacts sont stockés dans un Gist GitHub privé. Tu peux y accéder depuis ton téléphone ou un autre ordinateur.</p>
+              </div>
+
+              {/* Token setup */}
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-gray-700 block">Token GitHub (Personal Access Token)</label>
+                <p className="text-xs text-gray-500">
+                  Crée un token sur{' '}
+                  <a href="https://github.com/settings/tokens/new?scopes=gist&description=ScriptFlow+CRM+Sync" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
+                    github.com/settings/tokens
+                  </a>
+                  {' '}avec la permission <strong>gist</strong>.
+                </p>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      type={showToken ? 'text' : 'password'}
+                      value={tokenInput}
+                      onChange={(e) => setTokenInput(e.target.value)}
+                      placeholder="ghp_xxxxxxxxxxxx"
+                      className="w-full px-3 py-2 border rounded-lg text-sm pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowToken(!showToken)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
+                    >
+                      {showToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <button
+                    onClick={handleSaveToken}
+                    disabled={syncStatus === 'validating' || !tokenInput.trim()}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {syncStatus === 'validating' ? 'Vérification...' : 'Enregistrer'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Sync actions */}
+              {isTokenSaved && (
+                <div className="space-y-4">
+                  <div className="h-px bg-gray-200" />
+
+                  {syncConfig.lastSyncAt && (
+                    <p className="text-xs text-gray-500">
+                      Dernière sync : {new Date(syncConfig.lastSyncAt).toLocaleString('fr-FR')}
+                    </p>
+                  )}
+
+                  {syncConfig.gistId && (
+                    <p className="text-xs text-gray-400">
+                      Gist ID : <code className="bg-gray-100 px-1 rounded">{syncConfig.gistId}</code>
+                    </p>
+                  )}
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handlePush}
+                      disabled={syncStatus !== 'idle'}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50"
+                    >
+                      <Upload className="w-4 h-4" />
+                      {syncStatus === 'pushing' ? 'Envoi...' : 'Envoyer vers le cloud'}
+                    </button>
+                    <button
+                      onClick={handlePull}
+                      disabled={syncStatus !== 'idle' || !syncConfig.gistId}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
+                    >
+                      <Download className="w-4 h-4" />
+                      {syncStatus === 'pulling' ? 'Récupération...' : 'Récupérer du cloud'}
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={handleDisconnect}
+                    className="text-xs text-red-500 hover:underline"
+                  >
+                    Déconnecter le compte GitHub
+                  </button>
+                </div>
+              )}
+
+              {/* Status message */}
+              {syncMessage && (
+                <div className={`flex items-start gap-2 p-3 rounded-lg text-sm ${
+                  syncMessage.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
+                }`}>
+                  {syncMessage.type === 'success' ? <Check className="w-4 h-4 mt-0.5 flex-shrink-0" /> : <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />}
+                  <span>{syncMessage.text}</span>
+                </div>
+              )}
             </div>
           )}
         </div>

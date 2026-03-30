@@ -42,6 +42,10 @@ export interface Contact {
   stageId: string;
   customFields: Record<string, string>;
   tags: string[];
+  missedCalls: number;
+  callbackDate: string;
+  callbackTime: string;
+  callbackNote: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -74,17 +78,19 @@ interface CrmState {
   customFields: CustomField[];
   activities: Activity[];
   selectedContactId: string | null;
+  pinnedContactId: string | null;
   searchQuery: string;
   filterStageId: string | null;
   filterTag: string | null;
   view: 'pipeline' | 'list';
 
   // Contacts
-  addContact: (contact: Omit<Contact, 'id' | 'createdAt' | 'updatedAt' | 'customFields' | 'tags'>) => string;
+  addContact: (contact: Omit<Contact, 'id' | 'createdAt' | 'updatedAt' | 'customFields' | 'tags' | 'missedCalls' | 'callbackDate' | 'callbackTime' | 'callbackNote'>) => string;
   updateContact: (id: string, updates: Partial<Contact>) => void;
   deleteContact: (id: string) => void;
   moveContact: (id: string, stageId: string) => void;
   setSelectedContact: (id: string | null) => void;
+  setPinnedContact: (id: string | null) => void;
   addTagToContact: (id: string, tag: string) => void;
   removeTagFromContact: (id: string, tag: string) => void;
 
@@ -112,6 +118,9 @@ interface CrmState {
   setView: (view: 'pipeline' | 'list') => void;
   getFilteredContacts: () => Contact[];
   getAllTags: () => string[];
+
+  // Sync
+  replaceData: (data: { contacts?: Contact[]; stages?: PipelineStage[]; customFields?: CustomField[]; activities?: Activity[] }) => void;
 }
 
 export const useCrmStore = create<CrmState>()(
@@ -122,6 +131,7 @@ export const useCrmStore = create<CrmState>()(
       customFields: DEFAULT_FIELDS,
       activities: [],
       selectedContactId: null,
+      pinnedContactId: null,
       searchQuery: '',
       filterStageId: null,
       filterTag: null,
@@ -136,6 +146,10 @@ export const useCrmStore = create<CrmState>()(
           id,
           customFields: {},
           tags: [],
+          missedCalls: 0,
+          callbackDate: '',
+          callbackTime: '',
+          callbackNote: '',
           createdAt: now,
           updatedAt: now,
         };
@@ -164,6 +178,7 @@ export const useCrmStore = create<CrmState>()(
       },
 
       setSelectedContact: (id) => set({ selectedContactId: id }),
+      setPinnedContact: (id) => set({ pinnedContactId: id }),
 
       addTagToContact: (id, tag) => {
         const contact = get().contacts.find((c) => c.id === id);
@@ -281,6 +296,16 @@ export const useCrmStore = create<CrmState>()(
         const tags = new Set<string>();
         get().contacts.forEach((c) => c.tags.forEach((t) => tags.add(t)));
         return Array.from(tags).sort();
+      },
+
+      // --- Sync ---
+      replaceData: (data) => {
+        set({
+          contacts: data.contacts ?? get().contacts,
+          stages: data.stages ?? get().stages,
+          customFields: data.customFields ?? get().customFields,
+          activities: data.activities ?? get().activities,
+        });
       },
     }),
     {

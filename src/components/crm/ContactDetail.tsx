@@ -49,6 +49,8 @@ export default function ContactDetail() {
     getContactActivities,
     addTagToContact,
     removeTagFromContact,
+    setPinnedContact,
+    pinnedContactId,
   } = useCrmStore();
 
   const contact = contacts.find((c) => c.id === selectedContactId);
@@ -56,6 +58,7 @@ export default function ContactDetail() {
   const [newTag, setNewTag] = useState('');
   const [newActivity, setNewActivity] = useState({ type: 'note' as Activity['type'], content: '' });
   const [editMode, setEditMode] = useState(false);
+  const [phoneCopied, setPhoneCopied] = useState(false);
   const [editForm, setEditForm] = useState({ firstName: '', lastName: '', company: '', email: '', phone: '', facebookUrl: '', stageId: '' });
 
   if (!contact) return null;
@@ -153,14 +156,23 @@ export default function ContactDetail() {
           <div className="flex items-center gap-1">
             <button
               onClick={() => {
-                const stage = stages.find((s) => s.id === contact.stageId);
-                openProspectPopout(contact, stage);
+                if (pinnedContactId === contact.id) {
+                  setPinnedContact(null);
+                } else {
+                  setPinnedContact(contact.id);
+                  const s = stages.find((st) => st.id === contact.stageId);
+                  openProspectPopout(contact, s);
+                }
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
-              title="Épingler dans une fenêtre flottante"
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                pinnedContactId === contact.id
+                  ? 'text-amber-700 bg-amber-100'
+                  : 'text-amber-600 hover:bg-amber-50'
+              }`}
+              title="Épingler en overlay"
             >
               <Pin className="w-4 h-4" />
-              Épingler
+              {pinnedContactId === contact.id ? 'Désépingler' : 'Épingler'}
             </button>
             {editMode ? (
               <button onClick={saveEdit} className="p-2 hover:bg-green-50 rounded-lg text-green-600">
@@ -263,9 +275,17 @@ export default function ContactDetail() {
                       </div>
                     )}
                     {contact.phone && (
-                      <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                        <Phone className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm">{contact.phone}</span>
+                      <div
+                        className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-green-50 transition-colors"
+                        onClick={() => {
+                          navigator.clipboard.writeText(contact.phone);
+                          setPhoneCopied(true);
+                          setTimeout(() => setPhoneCopied(false), 1500);
+                        }}
+                        title="Cliquer pour copier"
+                      >
+                        {phoneCopied ? <Check className="w-4 h-4 text-green-500" /> : <Phone className="w-4 h-4 text-gray-400" />}
+                        <span className="text-sm">{phoneCopied ? 'Copié !' : contact.phone}</span>
                       </div>
                     )}
                     {contact.facebookUrl && (
