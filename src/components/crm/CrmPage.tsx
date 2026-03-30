@@ -9,7 +9,9 @@ import {
   X,
   Users,
   Upload,
+  RefreshCw,
 } from 'lucide-react';
+import { getSyncConfig, pushToGist, saveSyncConfig } from '../../utils/gistSync';
 import { useCrmStore } from '../../store/useCrmStore';
 import Pipeline from './Pipeline';
 import ListView from './ListView';
@@ -39,8 +41,30 @@ export default function CrmPage() {
   const [showSettings, setShowSettings] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
   const tags = getAllTags();
+  const syncConfig = getSyncConfig();
+  const isSyncConfigured = syncConfig.githubToken.length > 0;
+
+  const handleQuickSync = async () => {
+    setSyncing(true);
+    try {
+      const state = useCrmStore.getState();
+      const data = {
+        contacts: state.contacts,
+        stages: state.stages,
+        customFields: state.customFields,
+        activities: state.activities,
+      };
+      const gistId = await pushToGist(syncConfig.githubToken, syncConfig.gistId, data);
+      const now = new Date().toISOString();
+      saveSyncConfig({ ...syncConfig, gistId, lastSyncAt: now });
+    } catch {
+      // Silently fail for quick sync - user can use settings for details
+    }
+    setSyncing(false);
+  };
   const hasFilters = !!filterStageId || !!filterTag;
 
   return (
@@ -153,6 +177,17 @@ export default function CrmPage() {
           </div>
 
           <div className="w-px h-6 bg-gray-200" />
+
+          {isSyncConfigured && (
+            <button
+              onClick={handleQuickSync}
+              disabled={syncing}
+              className={`p-2 rounded-lg transition-colors ${syncing ? 'bg-blue-50' : 'hover:bg-gray-100'}`}
+              title="Synchroniser"
+            >
+              <RefreshCw className={`w-5 h-5 text-gray-600 ${syncing ? 'animate-spin' : ''}`} />
+            </button>
+          )}
 
           <button
             onClick={() => setShowSettings(true)}
