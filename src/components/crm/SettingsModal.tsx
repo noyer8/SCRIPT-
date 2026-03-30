@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { X, Plus, Trash2, GripVertical, RefreshCw, Upload, Download, Check, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useCrmStore } from '../../store/useCrmStore';
-import type { FieldType } from '../../store/useCrmStore';
+import type { FieldType, Contact, PipelineStage, CustomField, Activity } from '../../store/useCrmStore';
 import { getSyncConfig, saveSyncConfig, pushToGist, pullFromGist, validateToken, findExistingGist } from '../../utils/gistSync';
 
 interface Props {
@@ -149,19 +149,12 @@ export default function SettingsModal({ onClose }: Props) {
     setSyncMessage(null);
     try {
       const data = await pullFromGist(syncConfig.githubToken, syncConfig.gistId) as {
-        contacts?: unknown[];
-        stages?: unknown[];
-        customFields?: unknown[];
-        activities?: unknown[];
+        contacts?: Contact[];
+        stages?: PipelineStage[];
+        customFields?: CustomField[];
+        activities?: Activity[];
       };
-      const state = useCrmStore.getState();
-      if (data.contacts) state.contacts.splice(0, state.contacts.length);
-      useCrmStore.setState({
-        contacts: (data.contacts || []) as typeof state.contacts,
-        stages: (data.stages || state.stages) as typeof state.stages,
-        customFields: (data.customFields || state.customFields) as typeof state.customFields,
-        activities: (data.activities || []) as typeof state.activities,
-      });
+      store.replaceData(data);
       const now = new Date().toISOString();
       const newConfig = { ...syncConfig, lastSyncAt: now };
       saveSyncConfig(newConfig);

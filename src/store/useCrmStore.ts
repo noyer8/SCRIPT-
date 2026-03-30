@@ -115,6 +115,9 @@ interface CrmState {
   setView: (view: 'pipeline' | 'list') => void;
   getFilteredContacts: () => Contact[];
   getAllTags: () => string[];
+
+  // Sync
+  replaceData: (data: { contacts?: Contact[]; stages?: PipelineStage[]; customFields?: CustomField[]; activities?: Activity[] }) => void;
 }
 
 export const useCrmStore = create<CrmState>()(
@@ -287,6 +290,16 @@ export const useCrmStore = create<CrmState>()(
         const tags = new Set<string>();
         get().contacts.forEach((c) => c.tags.forEach((t) => tags.add(t)));
         return Array.from(tags).sort();
+      },
+
+      // --- Sync ---
+      replaceData: (data) => {
+        set({
+          contacts: data.contacts ?? get().contacts,
+          stages: data.stages ?? get().stages,
+          customFields: data.customFields ?? get().customFields,
+          activities: data.activities ?? get().activities,
+        });
       },
     }),
     {
