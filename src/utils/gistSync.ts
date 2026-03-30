@@ -48,13 +48,16 @@ export async function pushToGist(token: string, gistId: string | null, data: obj
   const content = JSON.stringify(data, null, 2);
   const files = { 'crm-data.json': { content } };
 
-  if (gistId) {
+  // If no gistId provided, try to find an existing one first to avoid duplicates
+  const resolvedGistId = gistId ?? await findExistingGist(token);
+
+  if (resolvedGistId) {
     // Update existing gist
-    await gistFetch(`https://api.github.com/gists/${gistId}`, token, {
+    await gistFetch(`https://api.github.com/gists/${resolvedGistId}`, token, {
       method: 'PATCH',
       body: JSON.stringify({ files }),
     });
-    return gistId;
+    return resolvedGistId;
   } else {
     // Create new gist
     const res = await gistFetch('https://api.github.com/gists', token, {
@@ -92,11 +95,11 @@ export async function validateToken(token: string): Promise<boolean> {
 export async function findExistingGist(token: string): Promise<string | null> {
   try {
     const res = await gistFetch('https://api.github.com/gists?per_page=100', token);
-    const gists: { id: string; description: string; files: Record<string, unknown> }[] = await res.json();
-    const match = gists.find(
-      (g) => g.description === 'ScriptFlow CRM - Sync Data' && 'crm-data.json' in g.files
-    );
-    return match?.id ?? null;
+    const gists: { id: string; description: string; files: Record<string, unknown>; updated_at: string }[] = await res.json();
+    const matches = gists
+      .filter((g) => g.description === 'ScriptFlow CRM - Sync Data' && 'crm-data.json' in g.files)
+      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+    return matches[0]?.id ?? null;
   } catch {
     return null;
   }
