@@ -88,3 +88,16 @@ export async function validateToken(token: string): Promise<boolean> {
     return false;
   }
 }
+
+export async function findExistingGist(token: string): Promise<string | null> {
+  try {
+    const res = await gistFetch('https://api.github.com/gists?per_page=100', token);
+    const gists: { id: string; description: string; files: Record<string, unknown> }[] = await res.json();
+    const match = gists.find(
+      (g) => g.description === 'ScriptFlow CRM - Sync Data' && 'crm-data.json' in g.files
+    );
+    return match?.id ?? null;
+  } catch {
+    return null;
+  }
+}

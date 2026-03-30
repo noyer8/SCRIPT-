@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { X, Plus, Trash2, GripVertical, RefreshCw, Upload, Download, Check, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useCrmStore } from '../../store/useCrmStore';
 import type { FieldType } from '../../store/useCrmStore';
-import { getSyncConfig, saveSyncConfig, pushToGist, pullFromGist, validateToken } from '../../utils/gistSync';
+import { getSyncConfig, saveSyncConfig, pushToGist, pullFromGist, validateToken, findExistingGist } from '../../utils/gistSync';
 
 interface Props {
   onClose: () => void;
@@ -101,10 +101,16 @@ export default function SettingsModal({ onClose }: Props) {
     setSyncMessage(null);
     const valid = await validateToken(tokenInput);
     if (valid) {
-      const newConfig = { ...syncConfig, githubToken: tokenInput };
+      // Auto-find existing CRM gist
+      const existingGistId = await findExistingGist(tokenInput);
+      const newConfig = { ...syncConfig, githubToken: tokenInput, gistId: existingGistId ?? syncConfig.gistId };
       saveSyncConfig(newConfig);
       setSyncConfig(newConfig);
-      setSyncMessage({ type: 'success', text: 'Token valide et sauvegardé !' });
+      if (existingGistId) {
+        setSyncMessage({ type: 'success', text: 'Token valide ! Gist CRM trouvé automatiquement.' });
+      } else {
+        setSyncMessage({ type: 'success', text: 'Token valide et sauvegardé !' });
+      }
     } else {
       setSyncMessage({ type: 'error', text: 'Token invalide. Vérifie qu\'il a les permissions "gist".' });
     }
