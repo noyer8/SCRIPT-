@@ -218,10 +218,7 @@ export default function ImportModal({ onClose }: Props) {
 
     const res = await fetch(WEBHOOK_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Webhook-Key': 'f2e4rvMp0irf',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
 
