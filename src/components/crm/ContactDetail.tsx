@@ -60,7 +60,7 @@ export default function ContactDetail() {
   const [newActivity, setNewActivity] = useState({ type: 'note' as Activity['type'], content: '' });
   const [editMode, setEditMode] = useState(false);
   const [phoneCopied, setPhoneCopied] = useState(false);
-  const [editForm, setEditForm] = useState({ firstName: '', lastName: '', company: '', email: '', phone: '', facebookUrl: '', stageId: '' });
+  const [editForm, setEditForm] = useState({ firstName: '', lastName: '', company: '', email: '', phone: '', facebookUrl: '', civilite: '', site: '', logo: '', ficheBien: '', img1: '', img2: '', img3: '', img4: '', img5: '', couleur1: '', couleur2: '', couleur3: '', stageId: '' });
 
   if (!contact) return null;
 
@@ -75,6 +75,18 @@ export default function ContactDetail() {
       email: contact.email,
       phone: contact.phone,
       facebookUrl: contact.facebookUrl,
+      civilite: contact.civilite || '',
+      site: contact.site || '',
+      logo: contact.logo || '',
+      ficheBien: contact.ficheBien || '',
+      img1: contact.img1 || '',
+      img2: contact.img2 || '',
+      img3: contact.img3 || '',
+      img4: contact.img4 || '',
+      img5: contact.img5 || '',
+      couleur1: contact.couleur1 || '',
+      couleur2: contact.couleur2 || '',
+      couleur3: contact.couleur3 || '',
       stageId: contact.stageId,
     });
     setEditMode(true);
@@ -247,6 +259,82 @@ export default function ContactDetail() {
                         className="w-full px-3 py-2 border rounded-lg text-sm mt-1"
                         placeholder="https://facebook.com/..."
                       />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-500">Civilité</label>
+                      <select
+                        value={editForm.civilite}
+                        onChange={(e) => setEditForm({ ...editForm, civilite: e.target.value })}
+                        className="w-full px-3 py-2 border rounded-lg text-sm mt-1"
+                      >
+                        <option value="">--</option>
+                        <option value="M.">M.</option>
+                        <option value="Mme">Mme</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-500">Site web</label>
+                      <input
+                        value={editForm.site}
+                        onChange={(e) => setEditForm({ ...editForm, site: e.target.value })}
+                        className="w-full px-3 py-2 border rounded-lg text-sm mt-1"
+                        placeholder="https://..."
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-500">Logo (URL)</label>
+                      <input
+                        value={editForm.logo}
+                        onChange={(e) => setEditForm({ ...editForm, logo: e.target.value })}
+                        className="w-full px-3 py-2 border rounded-lg text-sm mt-1"
+                        placeholder="https://..."
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-500">Fiche bien (URL)</label>
+                      <input
+                        value={editForm.ficheBien}
+                        onChange={(e) => setEditForm({ ...editForm, ficheBien: e.target.value })}
+                        className="w-full px-3 py-2 border rounded-lg text-sm mt-1"
+                        placeholder="https://..."
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium text-gray-500">Images du bien (URLs)</label>
+                      {([1, 2, 3, 4, 5] as const).map((n) => {
+                        const key = `img${n}` as keyof typeof editForm;
+                        return (
+                          <input
+                            key={n}
+                            value={editForm[key]}
+                            onChange={(e) => setEditForm({ ...editForm, [key]: e.target.value })}
+                            className="w-full px-3 py-2 border rounded-lg text-sm"
+                            placeholder={`Image ${n} — https://...`}
+                          />
+                        );
+                      })}
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium text-gray-500">Couleurs</label>
+                      {([1, 2, 3] as const).map((n) => {
+                        const key = `couleur${n}` as keyof typeof editForm;
+                        return (
+                          <div key={n} className="flex items-center gap-2">
+                            <input
+                              type="color"
+                              value={editForm[key] || '#000000'}
+                              onChange={(e) => setEditForm({ ...editForm, [key]: e.target.value })}
+                              className="w-8 h-8 rounded border cursor-pointer"
+                            />
+                            <input
+                              value={editForm[key]}
+                              onChange={(e) => setEditForm({ ...editForm, [key]: e.target.value })}
+                              className="flex-1 px-3 py-2 border rounded-lg text-sm"
+                              placeholder={`Couleur ${n} — #1a2b3c`}
+                            />
+                          </div>
+                        );
+                      })}
                     </div>
                     <div>
                       <label className="text-xs font-medium text-gray-500">Étape</label>

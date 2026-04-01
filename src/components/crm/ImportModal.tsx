@@ -9,14 +9,34 @@ interface ParsedData {
   rows: string[][];
 }
 
+interface ToastMessage {
+  id: number;
+  type: 'success' | 'error';
+  text: string;
+}
+
+const WEBHOOK_URL = 'https://pierre07.app.n8n.cloud/webhook/cfa0fd5e-ad41-462a-9fe4-a8d0eafe5fd8';
+
 // CRM target fields
 const CRM_FIELDS = [
   { key: 'firstName', label: 'Prénom' },
   { key: 'lastName', label: 'Nom' },
   { key: 'company', label: 'Entreprise' },
+  { key: 'civilite', label: 'Civilité' },
   { key: 'email', label: 'Email' },
   { key: 'phone', label: 'Téléphone' },
   { key: 'facebookUrl', label: 'Page Facebook' },
+  { key: 'site', label: 'Site web' },
+  { key: 'logo', label: 'Logo (URL)' },
+  { key: 'ficheBien', label: 'Fiche bien (URL)' },
+  { key: 'img1', label: 'Image 1 (URL)' },
+  { key: 'img2', label: 'Image 2 (URL)' },
+  { key: 'img3', label: 'Image 3 (URL)' },
+  { key: 'img4', label: 'Image 4 (URL)' },
+  { key: 'img5', label: 'Image 5 (URL)' },
+  { key: 'couleur1', label: 'Couleur 1' },
+  { key: 'couleur2', label: 'Couleur 2' },
+  { key: 'couleur3', label: 'Couleur 3' },
   { key: 'stage', label: 'Étape du pipeline' },
   { key: 'tags', label: 'Tags (séparés par virgules)' },
   { key: '_skip', label: '-- Ignorer cette colonne --' },
@@ -26,7 +46,6 @@ function parseInput(text: string): ParsedData {
   const lines = text.trim().split('\n').filter((l) => l.trim());
   if (lines.length === 0) return { headers: [], rows: [] };
 
-  // Detect separator: tab, semicolon, or comma
   const firstLine = lines[0];
   let separator = ',';
   if (firstLine.includes('\t')) separator = '\t';
@@ -65,9 +84,21 @@ function autoMapColumns(headers: string[], _stageNames: string[], customFieldNam
     firstName: [/pr[eé]nom/i, /first\s*name/i, /^prenom$/i],
     lastName: [/^nom$/i, /last\s*name/i, /family/i, /surname/i],
     company: [/entreprise/i, /soci[eé]t[eé]/i, /company/i, /org/i],
+    civilite: [/civilit[eé]/i, /titre/i, /gender/i],
     email: [/e-?mail/i, /courriel/i, /mail/i],
     phone: [/t[eé]l[eé]phone/i, /phone/i, /mobile/i, /num[eé]ro/i, /tel/i],
     facebookUrl: [/facebook/i, /fb/i, /page\s*facebook/i],
+    site: [/site/i, /website/i, /url.*agence/i],
+    logo: [/logo/i],
+    ficheBien: [/fiche.?bien/i, /fiche_bien/i],
+    img1: [/img\s*1/i, /image\s*1/i],
+    img2: [/img\s*2/i, /image\s*2/i],
+    img3: [/img\s*3/i, /image\s*3/i],
+    img4: [/img\s*4/i, /image\s*4/i],
+    img5: [/img\s*5/i, /image\s*5/i],
+    couleur1: [/couleur\s*1/i, /color\s*1/i],
+    couleur2: [/couleur\s*2/i, /color\s*2/i],
+    couleur3: [/couleur\s*3/i, /color\s*3/i],
     stage: [/[eé]tape/i, /stage/i, /statut/i, /status/i, /phase/i, /pipeline/i],
     tags: [/tags?/i, /[eé]tiquettes?/i, /labels?/i, /cat[eé]gorie/i],
   };
@@ -80,7 +111,6 @@ function autoMapColumns(headers: string[], _stageNames: string[], customFieldNam
         return;
       }
     }
-    // Check custom fields
     const matchedCustom = customFieldNames.find(
       (cf) => cf.toLowerCase() === h.toLowerCase()
     );
@@ -90,6 +120,10 @@ function autoMapColumns(headers: string[], _stageNames: string[], customFieldNam
   });
 
   return mapping;
+}
+
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 interface Props {
@@ -105,6 +139,15 @@ export default function ImportModal({ onClose }: Props) {
   const [mapping, setMapping] = useState<Record<number, string>>({});
   const [importedCount, setImportedCount] = useState(0);
   const [hasHeaders, setHasHeaders] = useState(true);
+  const [targetStageId, setTargetStageId] = useState('');
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [webhookSending, setWebhookSending] = useState(false);
+
+  const addToast = (type: 'success' | 'error', text: string) => {
+    const id = Date.now();
+    setToasts((prev) => [...prev, { id, type, text }]);
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4000);
+  };
 
   const allFields = useMemo(() => {
     const fields = [...CRM_FIELDS];
@@ -119,7 +162,6 @@ export default function ImportModal({ onClose }: Props) {
     if (data.headers.length === 0) return;
 
     if (!hasHeaders) {
-      // Generate header names
       const generated = data.headers.map((_, i) => `Colonne ${i + 1}`);
       data.rows.unshift(data.headers);
       data.headers = generated;
@@ -157,8 +199,44 @@ export default function ImportModal({ onClose }: Props) {
     });
   }, [parsed.rows, mapping]);
 
-  const handleImport = () => {
+  const isPrechauffeStage = (stageId: string): boolean => {
+    const stage = stages.find((s) => s.id === stageId);
+    return stage?.name.toLowerCase().includes('prechauf') || stage?.name.toLowerCase().includes('préchauff') || false;
+  };
+
+  const sendWebhook = async (data: Record<string, string>) => {
+    const payload = {
+      entreprise: data.company || '',
+      civilite: data.civilite || '',
+      prenom: data.firstName || '',
+      nom: data.lastName || '',
+      email: data.email || '',
+      site: data.site || '',
+      facebook: data.facebookUrl || '',
+      logo: data.logo || '',
+      fiche_bien: data.ficheBien || '',
+      img1: data.img1 || '',
+      img2: data.img2 || '',
+      img3: data.img3 || '',
+      img4: data.img4 || '',
+      img5: data.img5 || '',
+      couleur1: data.couleur1 || '',
+      couleur2: data.couleur2 || '',
+      couleur3: data.couleur3 || '',
+    };
+
+    const res = await fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  };
+
+  const handleImport = async () => {
     let count = 0;
+    const contactsToWebhook: Record<string, string>[] = [];
 
     parsed.rows.forEach((row) => {
       const data: Record<string, string> = {};
@@ -170,9 +248,9 @@ export default function ImportModal({ onClose }: Props) {
 
       if (!data.firstName && !data.lastName && !data.company) return;
 
-      // Find stage
-      let stageId = stages[0]?.id || '';
-      if (data.stage) {
+      // Determine stage
+      let stageId = targetStageId || stages[0]?.id || '';
+      if (!targetStageId && data.stage) {
         const match = stages.find(
           (s) => s.name.toLowerCase() === data.stage.toLowerCase()
         );
@@ -186,6 +264,18 @@ export default function ImportModal({ onClose }: Props) {
         email: data.email || '',
         phone: data.phone || '',
         facebookUrl: data.facebookUrl || '',
+        civilite: data.civilite || '',
+        site: data.site || '',
+        logo: data.logo || '',
+        ficheBien: data.ficheBien || '',
+        img1: data.img1 || '',
+        img2: data.img2 || '',
+        img3: data.img3 || '',
+        img4: data.img4 || '',
+        img5: data.img5 || '',
+        couleur1: data.couleur1 || '',
+        couleur2: data.couleur2 || '',
+        couleur3: data.couleur3 || '',
         stageId,
       });
 
@@ -208,11 +298,31 @@ export default function ImportModal({ onClose }: Props) {
         updateContact(contactId, { customFields: customFieldUpdates });
       }
 
+      // Queue for webhook if PRÉCHAUFFÉ
+      if (isPrechauffeStage(stageId)) {
+        contactsToWebhook.push(data);
+      }
+
       count++;
     });
 
     setImportedCount(count);
     setStep('done');
+
+    // Send webhooks with delay
+    if (contactsToWebhook.length > 0) {
+      setWebhookSending(true);
+      for (const data of contactsToWebhook) {
+        try {
+          await sendWebhook(data);
+          addToast('success', `Préchauffage lancé ✓ ${data.company || data.firstName || 'Contact'}`);
+        } catch {
+          addToast('error', `Erreur préchauffage ✗ ${data.company || data.firstName || 'Contact'}`);
+        }
+        await delay(500);
+      }
+      setWebhookSending(false);
+    }
   };
 
   return (
@@ -264,7 +374,7 @@ export default function ImportModal({ onClose }: Props) {
                 </ul>
               </div>
 
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 flex-wrap">
                 <label className="flex items-center gap-2 text-sm">
                   <input
                     type="checkbox"
@@ -287,12 +397,34 @@ export default function ImportModal({ onClose }: Props) {
                 </label>
               </div>
 
+              {/* Target stage selector */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Importer dans la colonne (facultatif)
+                </label>
+                <select
+                  value={targetStageId}
+                  onChange={(e) => setTargetStageId(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                >
+                  <option value="">-- Détection auto depuis le CSV --</option>
+                  {stages.sort((a, b) => a.order - b.order).map((s) => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+                {targetStageId && isPrechauffeStage(targetStageId) && (
+                  <p className="mt-1 text-xs text-orange-600">
+                    Les prospects importés dans PRÉCHAUFFÉ seront envoyés automatiquement au webhook n8n.
+                  </p>
+                )}
+              </div>
+
               <textarea
                 value={rawInput}
                 onChange={(e) => setRawInput(e.target.value)}
-                rows={14}
+                rows={12}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm font-mono resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder={`Collez vos données ici...\n\nExemple :\nPrénom\tNom\tEntreprise\tEmail\tTéléphone\tStatut\nJean\tDupont\tACME\tjean@acme.fr\t0612345678\tContacté\nMarie\tMartin\tTechCo\tmarie@techco.fr\t0698765432\tNouveau`}
+                placeholder={`Collez vos données ici...\n\nExemple CSV :\nENTREPRISE,CIVILITE,PRENOM,NOM,EMAIL,SITE,FACEBOOK,LOGO,FICHE_BIEN,IMG1,IMG2,IMG3,IMG4,IMG5`}
               />
 
               <p className="text-xs text-gray-400">
@@ -358,6 +490,15 @@ export default function ImportModal({ onClose }: Props) {
                 <span>Aperçu des {Math.min(5, parsed.rows.length)} premières lignes sur {parsed.rows.length} total</span>
               </div>
 
+              {targetStageId && (
+                <div className="text-sm text-gray-600">
+                  Colonne cible : <strong>{stages.find((s) => s.id === targetStageId)?.name}</strong>
+                  {isPrechauffeStage(targetStageId) && (
+                    <span className="ml-2 text-orange-600 text-xs">(webhook n8n activé)</span>
+                  )}
+                </div>
+              )}
+
               <div className="overflow-x-auto border rounded-lg">
                 <table className="w-full text-sm">
                   <thead>
@@ -408,6 +549,11 @@ export default function ImportModal({ onClose }: Props) {
               <p className="text-gray-600">
                 {importedCount} contact{importedCount > 1 ? 's' : ''} importé{importedCount > 1 ? 's' : ''} avec succès.
               </p>
+              {webhookSending && (
+                <p className="text-orange-600 text-sm mt-2 animate-pulse">
+                  Envoi des webhooks en cours...
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -463,6 +609,24 @@ export default function ImportModal({ onClose }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Toast notifications */}
+      {toasts.length > 0 && (
+        <div className="fixed bottom-4 right-4 z-[60] space-y-2">
+          {toasts.map((toast) => (
+            <div
+              key={toast.id}
+              className={`px-4 py-3 rounded-lg shadow-lg text-sm font-medium animate-[slideIn_0.3s_ease] ${
+                toast.type === 'success'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-red-600 text-white'
+              }`}
+            >
+              {toast.text}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
