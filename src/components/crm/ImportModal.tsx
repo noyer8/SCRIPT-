@@ -34,6 +34,9 @@ const CRM_FIELDS = [
   { key: 'img3', label: 'Image 3 (URL)' },
   { key: 'img4', label: 'Image 4 (URL)' },
   { key: 'img5', label: 'Image 5 (URL)' },
+  { key: 'couleur1', label: 'Couleur 1' },
+  { key: 'couleur2', label: 'Couleur 2' },
+  { key: 'couleur3', label: 'Couleur 3' },
   { key: 'stage', label: 'Étape du pipeline' },
   { key: 'tags', label: 'Tags (séparés par virgules)' },
   { key: '_skip', label: '-- Ignorer cette colonne --' },
@@ -93,6 +96,9 @@ function autoMapColumns(headers: string[], _stageNames: string[], customFieldNam
     img3: [/img\s*3/i, /image\s*3/i],
     img4: [/img\s*4/i, /image\s*4/i],
     img5: [/img\s*5/i, /image\s*5/i],
+    couleur1: [/couleur\s*1/i, /color\s*1/i],
+    couleur2: [/couleur\s*2/i, /color\s*2/i],
+    couleur3: [/couleur\s*3/i, /color\s*3/i],
     stage: [/[eé]tape/i, /stage/i, /statut/i, /status/i, /phase/i, /pipeline/i],
     tags: [/tags?/i, /[eé]tiquettes?/i, /labels?/i, /cat[eé]gorie/i],
   };
@@ -214,6 +220,9 @@ export default function ImportModal({ onClose }: Props) {
       img3: data.img3 || '',
       img4: data.img4 || '',
       img5: data.img5 || '',
+      couleur1: data.couleur1 || '',
+      couleur2: data.couleur2 || '',
+      couleur3: data.couleur3 || '',
     };
 
     const res = await fetch(WEBHOOK_URL, {
@@ -264,6 +273,9 @@ export default function ImportModal({ onClose }: Props) {
         img3: data.img3 || '',
         img4: data.img4 || '',
         img5: data.img5 || '',
+        couleur1: data.couleur1 || '',
+        couleur2: data.couleur2 || '',
+        couleur3: data.couleur3 || '',
         stageId,
       });
 
