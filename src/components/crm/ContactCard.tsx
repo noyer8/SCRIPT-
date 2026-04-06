@@ -28,7 +28,7 @@ function formatDateFr(dateStr: string): string {
 function getMissedCallsMax(stageName: string): number {
   const name = stageName.toLowerCase();
   if (name.includes('gatekeeper')) return 2;
-  if (name.includes('froid')) return 4;
+  if (name.includes('froid')) return 3;
   return 0;
 }
 
