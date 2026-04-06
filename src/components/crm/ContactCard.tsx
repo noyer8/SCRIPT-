@@ -25,7 +25,14 @@ function formatDateFr(dateStr: string): string {
   return `${day}/${month}/${year}`;
 }
 
-export default function ContactCard({ contact, isFirstStage = false }: { contact: Contact; isFirstStage?: boolean }) {
+function getMissedCallsMax(stageName: string): number {
+  const name = stageName.toLowerCase();
+  if (name.includes('gatekeeper')) return 2;
+  if (name.includes('froid')) return 4;
+  return 0;
+}
+
+export default function ContactCard({ contact, stageName = '' }: { contact: Contact; isFirstStage?: boolean; stageName?: string }) {
   const { setSelectedContact, setPinnedContact, pinnedContactId, stages, updateContact, deleteContact } = useCrmStore();
   const [phoneCopied, setPhoneCopied] = useState(false);
 
@@ -71,46 +78,50 @@ export default function ContactCard({ contact, isFirstStage = false }: { contact
         </button>
       </div>
 
-      {/* Missed calls tracker - only in first stage */}
-      {isFirstStage && contact.phone && (
-        <div className="flex items-center gap-1 mb-2" onClick={(e) => e.stopPropagation()}>
-          <Phone className="w-3 h-3 text-gray-400 mr-0.5" />
-          {[0, 1].map((i) => {
-            const current = contact.missedCalls || 0;
-            const isFilled = i < current;
-            return (
-              <button
-                key={i}
-                onClick={() => {
-                  if (isFilled && i === current - 1) {
-                    updateContact(contact.id, { missedCalls: i });
-                  } else if (!isFilled) {
-                    const newCount = i + 1;
-                    if (newCount >= 2) {
-                      if (confirm(`${contact.firstName} ${contact.lastName} — 2 appels sans réponse. Supprimer ce prospect ?`)) {
-                        deleteContact(contact.id);
+      {/* Missed calls tracker */}
+      {(() => {
+        const maxDots = getMissedCallsMax(stageName);
+        if (maxDots === 0 || !contact.phone) return null;
+        return (
+          <div className="flex items-center gap-1 mb-2" onClick={(e) => e.stopPropagation()}>
+            <Phone className="w-3 h-3 text-gray-400 mr-0.5" />
+            {Array.from({ length: maxDots }, (_, i) => {
+              const current = contact.missedCalls || 0;
+              const isFilled = i < current;
+              return (
+                <button
+                  key={i}
+                  onClick={() => {
+                    if (isFilled && i === current - 1) {
+                      updateContact(contact.id, { missedCalls: i });
+                    } else if (!isFilled) {
+                      const newCount = i + 1;
+                      if (newCount >= maxDots) {
+                        if (confirm(`${contact.firstName} ${contact.lastName} — ${maxDots} appels sans réponse. Supprimer ce prospect ?`)) {
+                          deleteContact(contact.id);
+                        }
+                      } else {
+                        updateContact(contact.id, { missedCalls: newCount });
                       }
-                    } else {
-                      updateContact(contact.id, { missedCalls: newCount });
                     }
-                  }
-                }}
-                className="transition-all"
-                title={isFilled ? 'Cliquer pour décocher' : `Appel ${i + 1} sans réponse`}
-              >
-                <div
-                  className={`w-3.5 h-3.5 rounded-full border-2 transition-colors ${
-                    isFilled
-                      ? 'bg-red-400 border-red-400'
-                      : 'border-gray-300 hover:border-red-300'
-                  }`}
-                />
-              </button>
-            );
-          })}
-          <span className="text-[10px] text-gray-400 ml-1">{contact.missedCalls || 0}/2</span>
-        </div>
-      )}
+                  }}
+                  className="transition-all"
+                  title={isFilled ? 'Cliquer pour décocher' : `Appel ${i + 1} sans réponse`}
+                >
+                  <div
+                    className={`w-3.5 h-3.5 rounded-full border-2 transition-colors ${
+                      isFilled
+                        ? 'bg-red-400 border-red-400'
+                        : 'border-gray-300 hover:border-red-300'
+                    }`}
+                  />
+                </button>
+              );
+            })}
+            <span className="text-[10px] text-gray-400 ml-1">{contact.missedCalls || 0}/{maxDots}</span>
+          </div>
+        );
+      })()}
 
       {contact.company && (
         <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
