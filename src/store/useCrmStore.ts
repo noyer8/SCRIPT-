@@ -51,6 +51,7 @@ export interface Contact {
   couleur1: string;
   couleur2: string;
   couleur3: string;
+  zone: string;
   stageId: string;
   customFields: Record<string, string>;
   tags: string[];
@@ -97,7 +98,7 @@ interface CrmState {
   view: 'pipeline' | 'list';
 
   // Contacts
-  addContact: (contact: Omit<Contact, 'id' | 'createdAt' | 'updatedAt' | 'customFields' | 'tags' | 'missedCalls' | 'callbackDate' | 'callbackTime' | 'callbackNote' | 'civilite' | 'site' | 'logo' | 'ficheBien' | 'img1' | 'img2' | 'img3' | 'img4' | 'img5' | 'couleur1' | 'couleur2' | 'couleur3'> & Partial<Pick<Contact, 'civilite' | 'site' | 'logo' | 'ficheBien' | 'img1' | 'img2' | 'img3' | 'img4' | 'img5' | 'couleur1' | 'couleur2' | 'couleur3'>>) => string;
+  addContact: (contact: Omit<Contact, 'id' | 'createdAt' | 'updatedAt' | 'customFields' | 'tags' | 'missedCalls' | 'callbackDate' | 'callbackTime' | 'callbackNote' | 'civilite' | 'site' | 'logo' | 'ficheBien' | 'img1' | 'img2' | 'img3' | 'img4' | 'img5' | 'couleur1' | 'couleur2' | 'couleur3' | 'zone'> & Partial<Pick<Contact, 'civilite' | 'site' | 'logo' | 'ficheBien' | 'img1' | 'img2' | 'img3' | 'img4' | 'img5' | 'couleur1' | 'couleur2' | 'couleur3' | 'zone'>>) => string;
   updateContact: (id: string, updates: Partial<Contact>) => void;
   deleteContact: (id: string) => void;
   moveContact: (id: string, stageId: string) => void;
@@ -168,6 +169,7 @@ export const useCrmStore = create<CrmState>()(
           couleur1: data.couleur1 || '',
           couleur2: data.couleur2 || '',
           couleur3: data.couleur3 || '',
+          zone: data.zone || '',
           customFields: {},
           tags: [],
           missedCalls: 0,
@@ -334,6 +336,16 @@ export const useCrmStore = create<CrmState>()(
     }),
     {
       name: 'noyer-crm-storage',
+      version: 1,
+      migrate: (persisted: unknown, version: number) => {
+        const state = persisted as Record<string, unknown>;
+        if (version === 0) {
+          // Migration: set zone B on all existing contacts
+          const contacts = (state.contacts as Contact[]) || [];
+          state.contacts = contacts.map((c) => ({ ...c, zone: c.zone || 'B' }));
+        }
+        return state as unknown as CrmState;
+      },
       partialize: (state) => ({
         contacts: state.contacts,
         stages: state.stages,

@@ -37,6 +37,7 @@ const CRM_FIELDS = [
   { key: 'couleur1', label: 'Couleur 1' },
   { key: 'couleur2', label: 'Couleur 2' },
   { key: 'couleur3', label: 'Couleur 3' },
+  { key: 'zone', label: 'Zone de vacances (A/B/C)' },
   { key: 'stage', label: 'Étape du pipeline' },
   { key: 'tags', label: 'Tags (séparés par virgules)' },
   { key: '_skip', label: '-- Ignorer cette colonne --' },
@@ -99,6 +100,7 @@ function autoMapColumns(headers: string[], _stageNames: string[], customFieldNam
     couleur1: [/couleur\s*1/i, /color\s*1/i],
     couleur2: [/couleur\s*2/i, /color\s*2/i],
     couleur3: [/couleur\s*3/i, /color\s*3/i],
+    zone: [/zone/i],
     stage: [/[eé]tape/i, /stage/i, /statut/i, /status/i, /phase/i, /pipeline/i],
     tags: [/tags?/i, /[eé]tiquettes?/i, /labels?/i, /cat[eé]gorie/i],
   };
@@ -223,6 +225,7 @@ export default function ImportModal({ onClose }: Props) {
       couleur1: data.couleur1 || '',
       couleur2: data.couleur2 || '',
       couleur3: data.couleur3 || '',
+      zone: data.zone || '',
     };
 
     const res = await fetch(WEBHOOK_URL, {
@@ -276,6 +279,7 @@ export default function ImportModal({ onClose }: Props) {
         couleur1: data.couleur1 || '',
         couleur2: data.couleur2 || '',
         couleur3: data.couleur3 || '',
+        zone: data.zone || '',
         stageId,
       });
 
