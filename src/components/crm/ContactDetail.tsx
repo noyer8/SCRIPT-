@@ -60,7 +60,7 @@ export default function ContactDetail() {
   const [newActivity, setNewActivity] = useState({ type: 'note' as Activity['type'], content: '' });
   const [editMode, setEditMode] = useState(false);
   const [phoneCopied, setPhoneCopied] = useState(false);
-  const [editForm, setEditForm] = useState({ firstName: '', lastName: '', company: '', email: '', phone: '', facebookUrl: '', civilite: '', site: '', logo: '', ficheBien: '', img1: '', img2: '', img3: '', img4: '', img5: '', couleur1: '', couleur2: '', couleur3: '', zone: '', stageId: '' });
+  const [editForm, setEditForm] = useState({ firstName: '', lastName: '', company: '', email: '', phone: '', facebookUrl: '', civilite: '', site: '', logo: '', ficheBien: '', img1: '', img2: '', img3: '', img4: '', img5: '', couleur1: '', couleur2: '', couleur3: '', zone: '', fermeture: '', stageId: '' });
 
   if (!contact) return null;
 
@@ -88,6 +88,7 @@ export default function ContactDetail() {
       couleur2: contact.couleur2 || '',
       couleur3: contact.couleur3 || '',
       zone: contact.zone || '',
+      fermeture: contact.fermeture || '',
       stageId: contact.stageId,
     });
     setEditMode(true);
@@ -348,6 +349,20 @@ export default function ContactDetail() {
                         <option value="A">Zone A</option>
                         <option value="B">Zone B</option>
                         <option value="C">Zone C</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-500">Heure de fermeture</label>
+                      <select
+                        value={editForm.fermeture}
+                        onChange={(e) => setEditForm({ ...editForm, fermeture: e.target.value })}
+                        className="w-full px-3 py-2 border rounded-lg text-sm mt-1"
+                      >
+                        <option value="">--</option>
+                        <option value="17">17h</option>
+                        <option value="18">18h</option>
+                        <option value="18:30">18h30</option>
+                        <option value="19">19h</option>
                       </select>
                     </div>
                     <div>

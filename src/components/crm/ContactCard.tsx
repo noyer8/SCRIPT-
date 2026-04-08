@@ -25,6 +25,16 @@ function formatDateFr(dateStr: string): string {
   return `${day}/${month}/${year}`;
 }
 
+function getFermetureColor(fermeture: string): string {
+  switch (fermeture) {
+    case '17': return '#000000';
+    case '18': return '#ef4444';
+    case '18:30': return '#eab308';
+    case '19': return '#22c55e';
+    default: return '';
+  }
+}
+
 function getMissedCallsMax(stageName: string): number {
   const name = stageName.toLowerCase();
   if (name.includes('gatekeeper')) return 2;
@@ -66,10 +76,21 @@ export default function ContactCard({ contact, stageName = '', stageIndex = -1 }
           {contact.firstName} {contact.lastName}
         </div>
         <div className="flex items-center gap-1">
-          {stageIndex >= 0 && stageIndex < 3 && contact.zone && (
-            <span className="text-[10px] font-bold text-gray-500 bg-gray-100 rounded px-1 py-0.5 leading-none">
-              {contact.zone}
-            </span>
+          {stageIndex >= 0 && stageIndex < 3 && (contact.zone || contact.fermeture) && (
+            <div className="flex items-center gap-1">
+              {contact.fermeture && (
+                <div
+                  className="w-3 h-3 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: getFermetureColor(contact.fermeture) }}
+                  title={`Fermeture ${contact.fermeture}h`}
+                />
+              )}
+              {contact.zone && (
+                <span className="text-[10px] font-bold text-gray-500 bg-gray-100 rounded px-1 py-0.5 leading-none">
+                  {contact.zone}
+                </span>
+              )}
+            </div>
           )}
           <button
             onClick={handlePin}
