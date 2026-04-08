@@ -126,6 +126,15 @@ function autoMapColumns(headers: string[], _stageNames: string[], customFieldNam
   return mapping;
 }
 
+function normalizeFermeture(val: string): string {
+  const v = val.trim().toLowerCase().replace('h', ':').replace(/:$/, '');
+  if (v === '17') return '17';
+  if (v === '18') return '18';
+  if (v === '18:30') return '18:30';
+  if (v === '19') return '19';
+  return val.trim();
+}
+
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -228,7 +237,7 @@ export default function ImportModal({ onClose }: Props) {
       couleur2: data.couleur2 || '',
       couleur3: data.couleur3 || '',
       zone: data.zone || '',
-      fermeture: data.fermeture || '',
+      fermeture: normalizeFermeture(data.fermeture || ''),
     };
 
     const res = await fetch(WEBHOOK_URL, {
@@ -283,7 +292,7 @@ export default function ImportModal({ onClose }: Props) {
         couleur2: data.couleur2 || '',
         couleur3: data.couleur3 || '',
         zone: data.zone || '',
-        fermeture: data.fermeture || '',
+        fermeture: normalizeFermeture(data.fermeture || ''),
         stageId,
       });
 
