@@ -87,7 +87,7 @@ export default function Pipeline() {
                       onDragStart={() => handleDragStart(contact.id)}
                       className="cursor-grab active:cursor-grabbing"
                     >
-                      <ContactCard contact={contact} isFirstStage={stage.id === sortedStages[0]?.id} stageName={stage.name} />
+                      <ContactCard contact={contact} isFirstStage={stage.id === sortedStages[0]?.id} stageName={stage.name} stageIndex={sortedStages.indexOf(stage)} />
                     </div>
                   ))}
                   {stageContacts.length === 0 && (
