@@ -3,27 +3,8 @@ import { useState } from 'react';
 import { useCrmStore } from '../../store/useCrmStore';
 import type { Contact } from '../../store/useCrmStore';
 import { openProspectPopout } from '../../utils/openProspectPopout';
-
-function isToday(dateStr: string): boolean {
-  if (!dateStr) return false;
-  const today = new Date();
-  const [year, month, day] = dateStr.split('-').map(Number);
-  return today.getFullYear() === year && today.getMonth() + 1 === month && today.getDate() === day;
-}
-
-function isPast(dateStr: string): boolean {
-  if (!dateStr) return false;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const date = new Date(dateStr + 'T00:00:00');
-  return date < today;
-}
-
-function formatDateFr(dateStr: string): string {
-  if (!dateStr) return '';
-  const [year, month, day] = dateStr.split('-');
-  return `${day}/${month}/${year}`;
-}
+import { isToday, isPast, formatDateFr, getTodayStr } from '../../utils/dateUtils';
+import CallTimeSuggestion from './CallTimeSuggestion';
 
 function getFermetureColor(fermeture: string): string {
   switch (fermeture) {
@@ -45,6 +26,7 @@ function getMissedCallsMax(stageName: string): number {
 export default function ContactCard({ contact, stageName = '', stageIndex = -1 }: { contact: Contact; isFirstStage?: boolean; stageName?: string; stageIndex?: number }) {
   const { setSelectedContact, setPinnedContact, pinnedContactId, stages, updateContact, deleteContact } = useCrmStore();
   const [phoneCopied, setPhoneCopied] = useState(false);
+  const [showTimeSuggestion, setShowTimeSuggestion] = useState(false);
 
   const handlePin = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -115,7 +97,7 @@ export default function ContactCard({ contact, stageName = '', stageIndex = -1 }
         const maxDots = getMissedCallsMax(stageName);
         if (maxDots === 0 || !contact.phone) return null;
         return (
-          <div className="flex items-center gap-1 mb-2" onClick={(e) => e.stopPropagation()}>
+          <div className="relative flex items-center gap-1 mb-2" onClick={(e) => e.stopPropagation()}>
             <Phone className="w-3 h-3 text-gray-400 mr-0.5" />
             {Array.from({ length: maxDots }, (_, i) => {
               const current = contact.missedCalls || 0;
@@ -133,7 +115,8 @@ export default function ContactCard({ contact, stageName = '', stageIndex = -1 }
                           deleteContact(contact.id);
                         }
                       } else {
-                        updateContact(contact.id, { missedCalls: newCount });
+                        updateContact(contact.id, { missedCalls: newCount, lastCalledDate: getTodayStr() });
+                        setShowTimeSuggestion(true);
                       }
                     }
                   }}
@@ -151,6 +134,16 @@ export default function ContactCard({ contact, stageName = '', stageIndex = -1 }
               );
             })}
             <span className="text-[10px] text-gray-400 ml-1">{contact.missedCalls || 0}/{maxDots}</span>
+            {showTimeSuggestion && (
+              <CallTimeSuggestion
+                fermeture={contact.fermeture}
+                onAccept={(date, time) => {
+                  updateContact(contact.id, { callbackDate: date, callbackTime: time });
+                  setShowTimeSuggestion(false);
+                }}
+                onDismiss={() => setShowTimeSuggestion(false)}
+              />
+            )}
           </div>
         );
       })()}

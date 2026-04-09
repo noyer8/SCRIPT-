@@ -10,16 +10,20 @@ import {
   Users,
   Upload,
   RefreshCw,
+  CalendarCheck,
+  PhoneCall,
 } from 'lucide-react';
 import { getSyncConfig, pushToGist, saveSyncConfig } from '../../utils/gistSync';
 import { useCrmStore } from '../../store/useCrmStore';
 import Pipeline from './Pipeline';
 import ListView from './ListView';
+import DailyCallList from './DailyCallList';
 import ContactDetail from './ContactDetail';
 import AddContactModal from './AddContactModal';
 import SettingsModal from './SettingsModal';
 import ImportModal from './ImportModal';
 import { Link } from 'react-router-dom';
+import { isToday, isPast } from '../../utils/dateUtils';
 
 export default function CrmPage() {
   const {
@@ -35,6 +39,8 @@ export default function CrmPage() {
     getAllTags,
     contacts,
     selectedContactId,
+    showOnlyCallable,
+    setShowOnlyCallable,
   } = useCrmStore();
 
   const [showAdd, setShowAdd] = useState(false);
@@ -45,6 +51,11 @@ export default function CrmPage() {
 
   const tags = getAllTags();
   const syncConfig = getSyncConfig();
+
+  // Count daily calls (today + overdue)
+  const dailyCallCount = contacts.filter(
+    (c) => c.callbackDate && (isToday(c.callbackDate) || isPast(c.callbackDate))
+  ).length;
   const isSyncConfigured = syncConfig.githubToken.length > 0;
 
   const handleQuickSync = async () => {
@@ -162,19 +173,47 @@ export default function CrmPage() {
               )}
             </div>
 
+            {/* "À appeler" toggle */}
+            <button
+              onClick={() => setShowOnlyCallable(!showOnlyCallable)}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                showOnlyCallable
+                  ? 'bg-green-100 text-green-700 ring-1 ring-green-300'
+                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+              }`}
+              title={showOnlyCallable ? 'Afficher tous les prospects' : 'Afficher uniquement les prospects à appeler'}
+            >
+              <PhoneCall className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{showOnlyCallable ? 'À appeler' : 'Tous'}</span>
+            </button>
+
             {/* View toggle */}
             <div className="flex bg-gray-100 rounded-lg p-0.5">
               <button
                 onClick={() => setView('pipeline')}
                 className={`p-1.5 rounded ${view === 'pipeline' ? 'bg-white shadow-sm' : ''}`}
+                title="Pipeline"
               >
                 <LayoutGrid className="w-4 h-4 text-gray-600" />
               </button>
               <button
                 onClick={() => setView('list')}
                 className={`p-1.5 rounded ${view === 'list' ? 'bg-white shadow-sm' : ''}`}
+                title="Liste"
               >
                 <List className="w-4 h-4 text-gray-600" />
+              </button>
+              <button
+                onClick={() => setView('daily')}
+                className={`p-1.5 rounded relative ${view === 'daily' ? 'bg-white shadow-sm' : ''}`}
+                title="Appels du jour"
+              >
+                <CalendarCheck className="w-4 h-4 text-gray-600" />
+                {dailyCallCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                    {dailyCallCount > 9 ? '9+' : dailyCallCount}
+                  </span>
+                )}
               </button>
             </div>
 
@@ -234,7 +273,7 @@ export default function CrmPage() {
       </header>
 
       {/* Content */}
-      {view === 'pipeline' ? <Pipeline /> : <ListView />}
+      {view === 'pipeline' ? <Pipeline /> : view === 'list' ? <ListView /> : <DailyCallList />}
 
       {/* Modals */}
       {selectedContactId && <ContactDetail />}
