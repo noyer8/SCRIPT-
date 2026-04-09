@@ -17,14 +17,18 @@ export default function Pipeline() {
   const getStageContacts = (stageId: string, stageIndex: number): Contact[] => {
     let filtered = contacts.filter((c) => c.stageId === stageId);
 
-    // "À appeler" mode: hide already called today + future callbacks (keep today's callbacks)
+    // "À appeler" mode: hide already called today + future callbacks + non-first-3-columns
     if (showOnlyCallable) {
       const todayStr = new Date().toISOString().split('T')[0];
+      const hasCallbackToday = (c: Contact) => c.callbackDate && isToday(c.callbackDate);
+
       filtered = filtered.filter((c) => {
         // Hide if called today
         if (c.lastCalledDate === todayStr) return false;
         // Hide if callback is in the future (but keep today and overdue)
         if (c.callbackDate && isFuture(c.callbackDate)) return false;
+        // Hide prospects not in the first 3 columns, unless they have a callback today
+        if (stageIndex >= 3 && !hasCallbackToday(c)) return false;
         return true;
       });
     }
