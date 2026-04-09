@@ -82,7 +82,7 @@ export default function ContactCard({ contact, stageName = '', stageIndex = -1 }
                 <div
                   className="w-3 h-3 rounded-full flex-shrink-0"
                   style={{ backgroundColor: getFermetureColor(contact.fermeture) }}
-                  title={`Fermeture ${contact.fermeture}h`}
+                  title={`Horaire ${contact.fermeture}h`}
                 />
               )}
               {contact.zone && (

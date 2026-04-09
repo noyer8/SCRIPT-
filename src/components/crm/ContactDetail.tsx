@@ -352,7 +352,7 @@ export default function ContactDetail() {
                       </select>
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-gray-500">Heure de fermeture</label>
+                      <label className="text-xs font-medium text-gray-500">Horaire</label>
                       <select
                         value={editForm.fermeture}
                         onChange={(e) => setEditForm({ ...editForm, fermeture: e.target.value })}
