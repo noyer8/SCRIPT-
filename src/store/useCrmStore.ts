@@ -52,6 +52,7 @@ export interface Contact {
   couleur2: string;
   couleur3: string;
   zone: string;
+  fermeture: string;
   stageId: string;
   customFields: Record<string, string>;
   tags: string[];
@@ -98,7 +99,7 @@ interface CrmState {
   view: 'pipeline' | 'list';
 
   // Contacts
-  addContact: (contact: Omit<Contact, 'id' | 'createdAt' | 'updatedAt' | 'customFields' | 'tags' | 'missedCalls' | 'callbackDate' | 'callbackTime' | 'callbackNote' | 'civilite' | 'site' | 'logo' | 'ficheBien' | 'img1' | 'img2' | 'img3' | 'img4' | 'img5' | 'couleur1' | 'couleur2' | 'couleur3' | 'zone'> & Partial<Pick<Contact, 'civilite' | 'site' | 'logo' | 'ficheBien' | 'img1' | 'img2' | 'img3' | 'img4' | 'img5' | 'couleur1' | 'couleur2' | 'couleur3' | 'zone'>>) => string;
+  addContact: (contact: Omit<Contact, 'id' | 'createdAt' | 'updatedAt' | 'customFields' | 'tags' | 'missedCalls' | 'callbackDate' | 'callbackTime' | 'callbackNote' | 'civilite' | 'site' | 'logo' | 'ficheBien' | 'img1' | 'img2' | 'img3' | 'img4' | 'img5' | 'couleur1' | 'couleur2' | 'couleur3' | 'zone' | 'fermeture'> & Partial<Pick<Contact, 'civilite' | 'site' | 'logo' | 'ficheBien' | 'img1' | 'img2' | 'img3' | 'img4' | 'img5' | 'couleur1' | 'couleur2' | 'couleur3' | 'zone' | 'fermeture'>>) => string;
   updateContact: (id: string, updates: Partial<Contact>) => void;
   deleteContact: (id: string) => void;
   moveContact: (id: string, stageId: string) => void;
@@ -170,6 +171,7 @@ export const useCrmStore = create<CrmState>()(
           couleur2: data.couleur2 || '',
           couleur3: data.couleur3 || '',
           zone: data.zone || '',
+          fermeture: data.fermeture || '',
           customFields: {},
           tags: [],
           missedCalls: 0,

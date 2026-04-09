@@ -5,6 +5,21 @@ import type { Contact } from '../../store/useCrmStore';
 import ContactCard from './ContactCard';
 import AddContactModal from './AddContactModal';
 
+function isToday(dateStr: string): boolean {
+  if (!dateStr) return false;
+  const today = new Date();
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return today.getFullYear() === year && today.getMonth() + 1 === month && today.getDate() === day;
+}
+
+function isPast(dateStr: string): boolean {
+  if (!dateStr) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const date = new Date(dateStr + 'T00:00:00');
+  return date < today;
+}
+
 export default function Pipeline() {
   const { stages, contacts, moveContact } = useCrmStore();
   const [addToStage, setAddToStage] = useState<string | null>(null);
@@ -13,10 +28,31 @@ export default function Pipeline() {
 
   const sortedStages = [...stages].sort((a, b) => a.order - b.order);
 
-  const getStageContacts = (stageId: string): Contact[] => {
-    return contacts
-      .filter((c) => c.stageId === stageId)
-      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  const getStageContacts = (stageId: string, stageIndex: number): Contact[] => {
+    const filtered = contacts.filter((c) => c.stageId === stageId);
+
+    // Columns 2 and 3 (index 1,2): callback today/overdue on top, future callback at bottom
+    if (stageIndex === 1 || stageIndex === 2) {
+      return filtered.sort((a, b) => {
+        const aHasCb = !!a.callbackDate;
+        const bHasCb = !!b.callbackDate;
+        const aTodayOrPast = aHasCb && (isToday(a.callbackDate) || isPast(a.callbackDate));
+        const bTodayOrPast = bHasCb && (isToday(b.callbackDate) || isPast(b.callbackDate));
+        const aFuture = aHasCb && !aTodayOrPast;
+        const bFuture = bHasCb && !bTodayOrPast;
+
+        // Today/overdue first
+        if (aTodayOrPast && !bTodayOrPast) return -1;
+        if (!aTodayOrPast && bTodayOrPast) return 1;
+        // Future callback last
+        if (aFuture && !bFuture) return 1;
+        if (!aFuture && bFuture) return -1;
+        // Same group: sort by updatedAt
+        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+      });
+    }
+
+    return filtered.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
   };
 
   const handleDragStart = (contactId: string) => {
@@ -44,8 +80,8 @@ export default function Pipeline() {
     <>
       <div className="flex-1 overflow-x-auto p-6">
         <div className="flex gap-4 h-full min-w-max">
-          {sortedStages.map((stage) => {
-            const stageContacts = getStageContacts(stage.id);
+          {sortedStages.map((stage, stageIdx) => {
+            const stageContacts = getStageContacts(stage.id, stageIdx);
             const isDragOver = dragOverStage === stage.id;
 
             return (
@@ -87,7 +123,7 @@ export default function Pipeline() {
                       onDragStart={() => handleDragStart(contact.id)}
                       className="cursor-grab active:cursor-grabbing"
                     >
-                      <ContactCard contact={contact} isFirstStage={stage.id === sortedStages[0]?.id} stageName={stage.name} />
+                      <ContactCard contact={contact} stageName={stage.name} stageIndex={stageIdx} />
                     </div>
                   ))}
                   {stageContacts.length === 0 && (

@@ -25,6 +25,16 @@ function formatDateFr(dateStr: string): string {
   return `${day}/${month}/${year}`;
 }
 
+function getFermetureColor(fermeture: string): string {
+  switch (fermeture) {
+    case '17': return '#000000';
+    case '18': return '#ef4444';
+    case '18:30': return '#eab308';
+    case '19': return '#22c55e';
+    default: return '';
+  }
+}
+
 function getMissedCallsMax(stageName: string): number {
   const name = stageName.toLowerCase();
   if (name.includes('gatekeeper')) return 2;
@@ -32,7 +42,7 @@ function getMissedCallsMax(stageName: string): number {
   return 0;
 }
 
-export default function ContactCard({ contact, stageName = '' }: { contact: Contact; isFirstStage?: boolean; stageName?: string }) {
+export default function ContactCard({ contact, stageName = '', stageIndex = -1 }: { contact: Contact; isFirstStage?: boolean; stageName?: string; stageIndex?: number }) {
   const { setSelectedContact, setPinnedContact, pinnedContactId, stages, updateContact, deleteContact } = useCrmStore();
   const [phoneCopied, setPhoneCopied] = useState(false);
 
@@ -49,6 +59,8 @@ export default function ContactCard({ contact, stageName = '' }: { contact: Cont
 
   const callbackIsToday = isToday(contact.callbackDate);
   const callbackIsPast = isPast(contact.callbackDate) && !callbackIsToday;
+  const callbackIsFuture = !!contact.callbackDate && !callbackIsToday && !callbackIsPast;
+  const showRedOutline = stageIndex === 1 && callbackIsFuture;
 
   return (
     <div
@@ -58,15 +70,34 @@ export default function ContactCard({ contact, stageName = '' }: { contact: Cont
           ? 'border-yellow-400 bg-yellow-50 shadow-[0_0_12px_rgba(250,204,21,0.4)]'
           : callbackIsPast
             ? 'border-red-300 bg-red-50'
-            : 'border-gray-200 hover:border-gray-300'
+            : showRedOutline
+              ? 'border-red-200'
+              : 'border-gray-200 hover:border-gray-300'
       }`}
     >
       <div className="flex items-start justify-between mb-2">
         <div className="font-medium text-sm text-gray-900">
           {contact.firstName} {contact.lastName}
         </div>
-        <button
-          onClick={handlePin}
+        <div className="flex items-center gap-1">
+          {stageIndex >= 0 && stageIndex < 3 && (contact.zone || contact.fermeture) && (
+            <div className="flex items-center gap-1">
+              {contact.fermeture && (
+                <div
+                  className="w-3 h-3 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: getFermetureColor(contact.fermeture) }}
+                  title={`Horaire ${contact.fermeture}h`}
+                />
+              )}
+              {contact.zone && (
+                <span className="text-[10px] font-bold text-gray-500 bg-gray-100 rounded px-1 py-0.5 leading-none">
+                  {contact.zone}
+                </span>
+              )}
+            </div>
+          )}
+          <button
+            onClick={handlePin}
           className={`opacity-0 group-hover:opacity-100 p-1 rounded transition-all ${
             pinnedContactId === contact.id
               ? 'opacity-100 bg-amber-100 text-amber-600'
@@ -76,6 +107,7 @@ export default function ContactCard({ contact, stageName = '' }: { contact: Cont
         >
           <Pin className="w-3.5 h-3.5" />
         </button>
+        </div>
       </div>
 
       {/* Missed calls tracker */}
