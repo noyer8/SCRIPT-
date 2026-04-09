@@ -59,6 +59,8 @@ export default function ContactCard({ contact, stageName = '', stageIndex = -1 }
 
   const callbackIsToday = isToday(contact.callbackDate);
   const callbackIsPast = isPast(contact.callbackDate) && !callbackIsToday;
+  const callbackIsFuture = !!contact.callbackDate && !callbackIsToday && !callbackIsPast;
+  const showRedOutline = stageIndex === 1 && callbackIsFuture;
 
   return (
     <div
@@ -68,7 +70,9 @@ export default function ContactCard({ contact, stageName = '', stageIndex = -1 }
           ? 'border-yellow-400 bg-yellow-50 shadow-[0_0_12px_rgba(250,204,21,0.4)]'
           : callbackIsPast
             ? 'border-red-300 bg-red-50'
-            : 'border-gray-200 hover:border-gray-300'
+            : showRedOutline
+              ? 'border-red-200'
+              : 'border-gray-200 hover:border-gray-300'
       }`}
     >
       <div className="flex items-start justify-between mb-2">
