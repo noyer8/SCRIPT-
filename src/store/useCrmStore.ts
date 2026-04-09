@@ -57,6 +57,7 @@ export interface Contact {
   customFields: Record<string, string>;
   tags: string[];
   missedCalls: number;
+  lastCalledDate: string;
   callbackDate: string;
   callbackTime: string;
   callbackNote: string;
@@ -96,10 +97,11 @@ interface CrmState {
   searchQuery: string;
   filterStageId: string | null;
   filterTag: string | null;
-  view: 'pipeline' | 'list';
+  view: 'pipeline' | 'list' | 'daily';
+  showOnlyCallable: boolean;
 
   // Contacts
-  addContact: (contact: Omit<Contact, 'id' | 'createdAt' | 'updatedAt' | 'customFields' | 'tags' | 'missedCalls' | 'callbackDate' | 'callbackTime' | 'callbackNote' | 'civilite' | 'site' | 'logo' | 'ficheBien' | 'img1' | 'img2' | 'img3' | 'img4' | 'img5' | 'couleur1' | 'couleur2' | 'couleur3' | 'zone' | 'fermeture'> & Partial<Pick<Contact, 'civilite' | 'site' | 'logo' | 'ficheBien' | 'img1' | 'img2' | 'img3' | 'img4' | 'img5' | 'couleur1' | 'couleur2' | 'couleur3' | 'zone' | 'fermeture'>>) => string;
+  addContact: (contact: Omit<Contact, 'id' | 'createdAt' | 'updatedAt' | 'customFields' | 'tags' | 'missedCalls' | 'lastCalledDate' | 'callbackDate' | 'callbackTime' | 'callbackNote' | 'civilite' | 'site' | 'logo' | 'ficheBien' | 'img1' | 'img2' | 'img3' | 'img4' | 'img5' | 'couleur1' | 'couleur2' | 'couleur3' | 'zone' | 'fermeture'> & Partial<Pick<Contact, 'civilite' | 'site' | 'logo' | 'ficheBien' | 'img1' | 'img2' | 'img3' | 'img4' | 'img5' | 'couleur1' | 'couleur2' | 'couleur3' | 'zone' | 'fermeture'>>) => string;
   updateContact: (id: string, updates: Partial<Contact>) => void;
   deleteContact: (id: string) => void;
   moveContact: (id: string, stageId: string) => void;
@@ -129,7 +131,8 @@ interface CrmState {
   setSearchQuery: (query: string) => void;
   setFilterStage: (stageId: string | null) => void;
   setFilterTag: (tag: string | null) => void;
-  setView: (view: 'pipeline' | 'list') => void;
+  setView: (view: 'pipeline' | 'list' | 'daily') => void;
+  setShowOnlyCallable: (v: boolean) => void;
   getFilteredContacts: () => Contact[];
   getAllTags: () => string[];
 
@@ -150,6 +153,7 @@ export const useCrmStore = create<CrmState>()(
       filterStageId: null,
       filterTag: null,
       view: 'pipeline',
+      showOnlyCallable: false,
 
       // --- Contacts ---
       addContact: (data) => {
@@ -175,6 +179,7 @@ export const useCrmStore = create<CrmState>()(
           customFields: {},
           tags: [],
           missedCalls: 0,
+          lastCalledDate: '',
           callbackDate: '',
           callbackTime: '',
           callbackNote: '',
@@ -299,6 +304,7 @@ export const useCrmStore = create<CrmState>()(
       setFilterStage: (stageId) => set({ filterStageId: stageId }),
       setFilterTag: (tag) => set({ filterTag: tag }),
       setView: (view) => set({ view }),
+      setShowOnlyCallable: (v) => set({ showOnlyCallable: v }),
 
       getFilteredContacts: () => {
         const { contacts, searchQuery, filterStageId, filterTag } = get();
@@ -338,13 +344,18 @@ export const useCrmStore = create<CrmState>()(
     }),
     {
       name: 'noyer-crm-storage',
-      version: 1,
+      version: 2,
       migrate: (persisted: unknown, version: number) => {
         const state = persisted as Record<string, unknown>;
         if (version === 0) {
           // Migration: set zone B on all existing contacts
           const contacts = (state.contacts as Contact[]) || [];
           state.contacts = contacts.map((c) => ({ ...c, zone: c.zone || 'B' }));
+        }
+        if (version < 2) {
+          // Migration: add lastCalledDate to existing contacts
+          const contacts = (state.contacts as Contact[]) || [];
+          state.contacts = contacts.map((c) => ({ ...c, lastCalledDate: (c as Contact).lastCalledDate || '' }));
         }
         return state as unknown as CrmState;
       },

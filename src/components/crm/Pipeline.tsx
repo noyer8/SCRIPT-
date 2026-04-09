@@ -4,24 +4,10 @@ import { useCrmStore } from '../../store/useCrmStore';
 import type { Contact } from '../../store/useCrmStore';
 import ContactCard from './ContactCard';
 import AddContactModal from './AddContactModal';
-
-function isToday(dateStr: string): boolean {
-  if (!dateStr) return false;
-  const today = new Date();
-  const [year, month, day] = dateStr.split('-').map(Number);
-  return today.getFullYear() === year && today.getMonth() + 1 === month && today.getDate() === day;
-}
-
-function isPast(dateStr: string): boolean {
-  if (!dateStr) return false;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const date = new Date(dateStr + 'T00:00:00');
-  return date < today;
-}
+import { isToday, isPast, isFuture } from '../../utils/dateUtils';
 
 export default function Pipeline() {
-  const { stages, contacts, moveContact } = useCrmStore();
+  const { stages, contacts, moveContact, showOnlyCallable } = useCrmStore();
   const [addToStage, setAddToStage] = useState<string | null>(null);
   const [draggedContact, setDraggedContact] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
@@ -29,7 +15,19 @@ export default function Pipeline() {
   const sortedStages = [...stages].sort((a, b) => a.order - b.order);
 
   const getStageContacts = (stageId: string, stageIndex: number): Contact[] => {
-    const filtered = contacts.filter((c) => c.stageId === stageId);
+    let filtered = contacts.filter((c) => c.stageId === stageId);
+
+    // "À appeler" mode: hide already called today + future callbacks (keep today's callbacks)
+    if (showOnlyCallable) {
+      const todayStr = new Date().toISOString().split('T')[0];
+      filtered = filtered.filter((c) => {
+        // Hide if called today
+        if (c.lastCalledDate === todayStr) return false;
+        // Hide if callback is in the future (but keep today and overdue)
+        if (c.callbackDate && isFuture(c.callbackDate)) return false;
+        return true;
+      });
+    }
 
     // Columns 2 and 3 (index 1,2): callback today/overdue on top, future callback at bottom
     if (stageIndex === 1 || stageIndex === 2) {
