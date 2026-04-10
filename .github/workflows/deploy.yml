@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: ['master', 'main', 'claude/*']
+    branches: ['master', 'main', 'claude/cold-call-script-platform-BolKU']
   workflow_dispatch:
 
 permissions:
