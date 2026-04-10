@@ -1,8 +1,9 @@
+import { useState } from 'react';
 import { AlertTriangle, CalendarPlus } from 'lucide-react';
 import { useCrmStore } from '../../store/useCrmStore';
 import type { Contact } from '../../store/useCrmStore';
 import { isToday, isPast, getTodayStr } from '../../utils/dateUtils';
-import { CALL_SLOTS, getCurrentSlot } from '../../utils/callSlots';
+import { CALL_SLOTS, getCurrentSlot, getValidSlots } from '../../utils/callSlots';
 import ContactCard from './ContactCard';
 
 function getSlotForTime(time: string): string | null {
@@ -15,7 +16,9 @@ function getSlotForTime(time: string): string | null {
 }
 
 export default function DailyCallList() {
-  const { contacts, stages, scheduleUnscheduled } = useCrmStore();
+  const { contacts, stages, updateContact, scheduleUnscheduled } = useCrmStore();
+  const [draggedContact, setDraggedContact] = useState<string | null>(null);
+  const [dragOverSlot, setDragOverSlot] = useState<string | null>(null);
 
   const todayStr = getTodayStr();
   const currentSlot = getCurrentSlot();
@@ -23,8 +26,7 @@ export default function DailyCallList() {
   const currentHour = now.getHours() + now.getMinutes() / 60;
 
   const sortedStages = [...stages].sort((a, b) => a.order - b.order);
-  const first3Stages = sortedStages.slice(0, 3);
-  const first3StageIds = new Set(first3Stages.map((s) => s.id));
+  const first3StageIds = new Set(sortedStages.slice(0, 3).map((s) => s.id));
 
   const getStageInfo = (stageId: string) => {
     const idx = sortedStages.findIndex((s) => s.id === stageId);
@@ -39,21 +41,18 @@ export default function DailyCallList() {
   // Overdue: contacts with a past callbackDate
   const overdueContacts: Contact[] = [];
 
-  // Slot groups: contacts from first 3 columns with a slot, no future callbackDate
+  // Slot groups
   const slotGroups = new Map<string, Contact[]>();
   CALL_SLOTS.forEach((s) => slotGroups.set(s.id, []));
 
   contacts.forEach((c) => {
-    // Hide already called today
     if (c.lastCalledDate === todayStr) return;
 
-    // Overdue: has a past callbackDate
     if (c.callbackDate && isPast(c.callbackDate)) {
       overdueContacts.push(c);
       return;
     }
 
-    // Skip contacts not in first 3 columns (unless they have a today callback)
     if (!first3StageIds.has(c.stageId)) {
       if (c.callbackDate && isToday(c.callbackDate) && c.callbackTime) {
         const slotId = getSlotForTime(c.callbackTime);
@@ -64,10 +63,7 @@ export default function DailyCallList() {
       return;
     }
 
-    // Skip contacts with a future callbackDate (they have a specific scheduled date)
     if (c.callbackDate && !isToday(c.callbackDate)) return;
-
-    // Must have a slot assigned
     if (!c.callbackTime) return;
 
     const slotId = getSlotForTime(c.callbackTime);
@@ -77,6 +73,44 @@ export default function DailyCallList() {
   });
 
   overdueContacts.sort((a, b) => a.callbackDate.localeCompare(b.callbackDate));
+
+  // Drag & drop handlers
+  const handleDragStart = (contactId: string) => {
+    setDraggedContact(contactId);
+  };
+
+  const handleDragOver = (e: React.DragEvent, slotId: string) => {
+    e.preventDefault();
+    // Check if dragged contact can go in this slot (fermeture check)
+    if (draggedContact) {
+      const contact = contacts.find((c) => c.id === draggedContact);
+      if (contact) {
+        const slot = CALL_SLOTS.find((s) => s.id === slotId);
+        const validSlots = getValidSlots(contact.fermeture);
+        if (slot && validSlots.some((v) => v.id === slot.id)) {
+          setDragOverSlot(slotId);
+        }
+      }
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDragOverSlot(null);
+  };
+
+  const handleDrop = (slotId: string) => {
+    if (!draggedContact) return;
+    const contact = contacts.find((c) => c.id === draggedContact);
+    const slot = CALL_SLOTS.find((s) => s.id === slotId);
+    if (contact && slot) {
+      const validSlots = getValidSlots(contact.fermeture);
+      if (validSlots.some((v) => v.id === slot.id)) {
+        updateContact(contact.id, { callbackTime: slot.start });
+      }
+    }
+    setDraggedContact(null);
+    setDragOverSlot(null);
+  };
 
   return (
     <div className="flex-1 overflow-x-auto p-4 sm:p-6">
@@ -109,13 +143,19 @@ export default function DailyCallList() {
               {overdueContacts.map((c) => {
                 const info = getStageInfo(c.stageId);
                 return (
-                  <ContactCard
+                  <div
                     key={c.id}
-                    contact={c}
-                    stageName={info.name}
-                    stageIndex={info.index}
-                    showStageBadge
-                  />
+                    draggable
+                    onDragStart={() => handleDragStart(c.id)}
+                    className="cursor-grab active:cursor-grabbing"
+                  >
+                    <ContactCard
+                      contact={c}
+                      stageName={info.name}
+                      stageIndex={info.index}
+                      showStageBadge
+                    />
+                  </div>
                 );
               })}
             </div>
@@ -128,17 +168,23 @@ export default function DailyCallList() {
           const isCurrent = currentSlot?.id === slot.id;
           const isPassed = currentHour >= slot.endHour;
           const isEmpty = group.length === 0;
+          const isDragOver = dragOverSlot === slot.id;
 
           return (
             <div
               key={slot.id}
               className={`w-72 flex flex-col rounded-xl border-2 flex-shrink-0 transition-colors ${
-                isCurrent
-                  ? 'bg-green-50 border-green-300'
-                  : isEmpty && isPassed
-                    ? 'bg-gray-50 border-transparent opacity-50'
-                    : 'bg-gray-50 border-transparent'
+                isDragOver
+                  ? 'bg-blue-50 border-blue-400'
+                  : isCurrent
+                    ? 'bg-green-50 border-green-300'
+                    : isEmpty && isPassed
+                      ? 'bg-gray-50 border-transparent opacity-50'
+                      : 'bg-gray-50 border-transparent'
               }`}
+              onDragOver={(e) => handleDragOver(e, slot.id)}
+              onDragLeave={handleDragLeave}
+              onDrop={() => handleDrop(slot.id)}
             >
               {/* Slot header */}
               <div className="flex items-center gap-2 p-3 border-b border-gray-200">
@@ -169,12 +215,19 @@ export default function DailyCallList() {
                 {group.map((c) => {
                   const info = getStageInfo(c.stageId);
                   return (
-                    <ContactCard
+                    <div
                       key={c.id}
-                      contact={c}
-                      stageName={info.name}
-                      stageIndex={info.index}
-                    />
+                      draggable
+                      onDragStart={() => handleDragStart(c.id)}
+                      className="cursor-grab active:cursor-grabbing"
+                    >
+                      <ContactCard
+                        contact={c}
+                        stageName={info.name}
+                        stageIndex={info.index}
+                        showStageBadge
+                      />
+                    </div>
                   );
                 })}
                 {isEmpty && (
