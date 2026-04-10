@@ -365,7 +365,7 @@ export const useCrmStore = create<CrmState>()(
     }),
     {
       name: 'noyer-crm-storage',
-      version: 3,
+      version: 4,
       migrate: (persisted: unknown, version: number) => {
         const state = persisted as Record<string, unknown>;
         if (version === 0) {
@@ -387,6 +387,17 @@ export const useCrmStore = create<CrmState>()(
           );
           state.contacts = contacts.map((c) =>
             gkIds.has(c.stageId) ? { ...c, callbackDate: '' } : c
+          );
+        }
+        if (version < 4) {
+          // Migration: clear callbackDate on all first-3-column contacts
+          // The slot system uses callbackTime only, callbackDate is for manual reminders
+          const contacts = (state.contacts as Contact[]) || [];
+          const stages = (state.stages as PipelineStage[]) || [];
+          const sorted = [...stages].sort((a, b) => a.order - b.order);
+          const first3Ids = new Set(sorted.slice(0, 3).map((s) => s.id));
+          state.contacts = contacts.map((c) =>
+            first3Ids.has(c.stageId) ? { ...c, callbackDate: '' } : c
           );
         }
         return state as unknown as CrmState;
