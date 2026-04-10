@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { useCrmStore } from '../../store/useCrmStore';
 import type { Contact } from '../../store/useCrmStore';
 import { openProspectPopout } from '../../utils/openProspectPopout';
-import { isToday, isPast, formatDateFr, getTodayStr } from '../../utils/dateUtils';
+import { isToday, isPast, formatDateFr, getTodayStr, getNextWorkdayStr } from '../../utils/dateUtils';
+import { assignBestSlot } from '../../utils/callSlots';
 import CallTimeSuggestion from './CallTimeSuggestion';
 
 function getFermetureColor(fermeture: string): string {
@@ -115,7 +116,15 @@ export default function ContactCard({ contact, stageName = '', stageIndex = -1 }
                           deleteContact(contact.id);
                         }
                       } else {
-                        updateContact(contact.id, { missedCalls: newCount, lastCalledDate: getTodayStr() });
+                        const nextDate = getNextWorkdayStr();
+                        const allContacts = useCrmStore.getState().contacts;
+                        const bestSlot = assignBestSlot(contact.fermeture, allContacts, nextDate);
+                        updateContact(contact.id, {
+                          missedCalls: newCount,
+                          lastCalledDate: getTodayStr(),
+                          callbackDate: nextDate,
+                          callbackTime: bestSlot?.start || '09:00',
+                        });
                         setShowTimeSuggestion(true);
                       }
                     }

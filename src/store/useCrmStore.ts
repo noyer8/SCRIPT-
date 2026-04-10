@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
+import { scheduleAllUnscheduled } from '../utils/callSlots';
 
 // --- Types ---
 
@@ -135,6 +136,9 @@ interface CrmState {
   setShowOnlyCallable: (v: boolean) => void;
   getFilteredContacts: () => Contact[];
   getAllTags: () => string[];
+
+  // Scheduling
+  scheduleUnscheduled: () => number;
 
   // Sync
   replaceData: (data: { contacts?: Contact[]; stages?: PipelineStage[]; customFields?: CustomField[]; activities?: Activity[] }) => void;
@@ -330,6 +334,16 @@ export const useCrmStore = create<CrmState>()(
         const tags = new Set<string>();
         get().contacts.forEach((c) => c.tags.forEach((t) => tags.add(t)));
         return Array.from(tags).sort();
+      },
+
+      // --- Scheduling ---
+      scheduleUnscheduled: () => {
+        const { contacts, stages } = get();
+        const updates = scheduleAllUnscheduled(contacts, stages);
+        updates.forEach(({ id, callbackDate, callbackTime }) => {
+          get().updateContact(id, { callbackDate, callbackTime });
+        });
+        return updates.length;
       },
 
       // --- Sync ---
