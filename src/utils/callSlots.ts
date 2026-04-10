@@ -1,4 +1,4 @@
-import { getTodayStr } from './dateUtils';
+import { getNextWorkdayStr } from './dateUtils';
 import type { Contact } from '../store/useCrmStore';
 
 export interface CallSlot {
@@ -42,22 +42,11 @@ export function getCurrentSlot(): CallSlot | null {
   }) || null;
 }
 
-/** Suggest the best next slot (not the current one, respecting fermeture) */
+/** Suggest the best next slot for the next working day (respecting fermeture) */
 export function suggestNextSlot(fermeture: string): CallSlot | null {
   const closing = parseFermeture(fermeture);
-  const now = new Date();
-  const current = now.getHours() + now.getMinutes() / 60;
-  const currentSlot = getCurrentSlot();
 
-  // Try future slots today
-  for (const slot of CALL_SLOTS) {
-    const start = slot.hour + slot.min / 60;
-    if (start < closing && start > current && slot.id !== currentSlot?.id) {
-      return slot;
-    }
-  }
-
-  // All today's slots done → first valid slot (for tomorrow)
+  // Always suggest for the next working day → first valid slot
   for (const slot of CALL_SLOTS) {
     const start = slot.hour + slot.min / 60;
     if (start < closing) return slot;
@@ -66,19 +55,19 @@ export function suggestNextSlot(fermeture: string): CallSlot | null {
   return null;
 }
 
-/** Pick the best slot for a new prospect based on fermeture + load balancing */
+/** Pick the best slot for a new prospect based on fermeture + load balancing (next working day) */
 export function assignBestSlot(fermeture: string, contacts: Contact[]): CallSlot | null {
   const validSlots = getValidSlots(fermeture);
   if (validSlots.length === 0) return null;
 
-  const todayStr = getTodayStr();
+  const targetDate = getNextWorkdayStr();
 
-  // Count how many prospects are assigned to each slot today
+  // Count how many prospects are assigned to each slot on the target day
   const slotCounts = new Map<string, number>();
   validSlots.forEach((s) => slotCounts.set(s.start, 0));
 
   contacts.forEach((c) => {
-    if (c.callbackDate === todayStr && c.callbackTime) {
+    if (c.callbackDate === targetDate && c.callbackTime) {
       const current = slotCounts.get(c.callbackTime);
       if (current !== undefined) {
         slotCounts.set(c.callbackTime, current + 1);
