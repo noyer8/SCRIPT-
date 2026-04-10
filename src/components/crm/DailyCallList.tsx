@@ -114,6 +114,7 @@ export default function DailyCallList() {
                     contact={c}
                     stageName={info.name}
                     stageIndex={info.index}
+                    showStageBadge
                   />
                 );
               })}
