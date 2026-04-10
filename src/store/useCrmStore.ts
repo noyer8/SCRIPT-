@@ -340,8 +340,8 @@ export const useCrmStore = create<CrmState>()(
       scheduleUnscheduled: () => {
         const { contacts, stages } = get();
         const updates = scheduleAllUnscheduled(contacts, stages);
-        updates.forEach(({ id, callbackDate, callbackTime }) => {
-          get().updateContact(id, { callbackDate, callbackTime });
+        updates.forEach(({ id, callbackTime }) => {
+          get().updateContact(id, { callbackTime });
         });
         return updates.length;
       },
