@@ -180,8 +180,8 @@ export default function ContactCard({ contact, stageName = '', stageIndex = -1 }
         </div>
       )}
 
-      {/* Callback info - read only, shown when set */}
-      {contact.callbackDate && (
+      {/* Callback info - read only, hidden for gatekeeper */}
+      {contact.callbackDate && !stageName.toLowerCase().includes('gatekeeper') && (
         <div className="mt-2 pt-2 border-t border-gray-100">
           <div className="flex items-center gap-1.5 text-[10px]">
             <CalendarClock className={`w-3 h-3 flex-shrink-0 ${callbackIsToday ? 'text-yellow-600' : callbackIsPast ? 'text-red-500' : 'text-gray-400'}`} />
