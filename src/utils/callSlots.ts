@@ -21,9 +21,9 @@ export const CALL_SLOTS: CallSlot[] = [
 ];
 
 export function parseFermeture(fermeture: string): number {
-  if (!fermeture) return 19;
+  if (!fermeture) return 18; // pas de fermeture = exclure les 2 derniers créneaux
   if (fermeture === '18:30') return 18.5;
-  return parseFloat(fermeture) || 19;
+  return parseFloat(fermeture) || 18;
 }
 
 /** Returns which slots are valid given a prospect's fermeture */

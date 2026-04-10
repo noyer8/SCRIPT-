@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { useCrmStore } from '../../store/useCrmStore';
 import type { Contact } from '../../store/useCrmStore';
 import { openProspectPopout } from '../../utils/openProspectPopout';
-import { isToday, isPast, formatDateFr, getTodayStr } from '../../utils/dateUtils';
+import { isToday, isPast, formatDateFr } from '../../utils/dateUtils';
+import { getValidSlots } from '../../utils/callSlots';
 
 function getFermetureColor(fermeture: string): string {
   switch (fermeture) {
@@ -122,9 +123,13 @@ export default function ContactCard({ contact, stageName = '', stageIndex = -1, 
                           deleteContact(contact.id);
                         }
                       } else {
+                        // Move to a different valid slot
+                        const validSlots = getValidSlots(contact.fermeture);
+                        const otherSlots = validSlots.filter((s) => s.start !== contact.callbackTime);
+                        const nextSlot = otherSlots.length > 0 ? otherSlots[Math.floor(Math.random() * otherSlots.length)] : null;
                         updateContact(contact.id, {
                           missedCalls: newCount,
-                          lastCalledDate: getTodayStr(),
+                          ...(nextSlot ? { callbackTime: nextSlot.start } : {}),
                         });
                       }
                     }
@@ -189,8 +194,8 @@ export default function ContactCard({ contact, stageName = '', stageIndex = -1, 
         </div>
       )}
 
-      {/* Callback info - read only, hidden for gatekeeper */}
-      {contact.callbackDate && !stageName.toLowerCase().includes('gatekeeper') && (
+      {/* Callback info */}
+      {contact.callbackDate && (
         <div className="mt-2 pt-2 border-t border-gray-100">
           <div className="flex items-center gap-1.5 text-[10px]">
             <CalendarClock className={`w-3 h-3 flex-shrink-0 ${callbackIsToday ? 'text-yellow-600' : callbackIsPast ? 'text-red-500' : 'text-gray-400'}`} />
