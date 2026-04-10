@@ -44,11 +44,14 @@ export default function DailyCallList() {
 
   const sortedStages = [...stages].sort((a, b) => a.order - b.order);
   const first3StageIds = new Set(sortedStages.slice(0, 3).map((s) => s.id));
+  const gatekeeperStageIds = new Set(
+    sortedStages.filter((s) => s.name.toLowerCase().includes('gatekeeper')).map((s) => s.id)
+  );
   const getStageName = (stageId: string) => stages.find((s) => s.id === stageId)?.name || '';
 
-  // Count unscheduled prospects in first 3 columns
+  // Count unscheduled prospects in first 3 columns (excluding gatekeeper)
   const unscheduledCount = contacts.filter(
-    (c) => first3StageIds.has(c.stageId) && !c.callbackDate
+    (c) => first3StageIds.has(c.stageId) && !gatekeeperStageIds.has(c.stageId) && !c.callbackDate
   ).length;
 
   // Overdue contacts

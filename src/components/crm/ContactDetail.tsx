@@ -418,8 +418,8 @@ export default function ContactDetail() {
                 )}
               </div>
 
-              {/* Callback / Rappel */}
-              <div>
+              {/* Callback / Rappel — masqué pour les gatekeeper */}
+              {!stage?.name.toLowerCase().includes('gatekeeper') && <div>
                 <h3 className="text-sm font-medium text-gray-700 mb-2">Rappel</h3>
                 <div className="space-y-2 p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center gap-2">
@@ -456,7 +456,7 @@ export default function ContactDetail() {
                     />
                   </div>
                 </div>
-              </div>
+              </div>}
 
               {/* Tags */}
               <div>

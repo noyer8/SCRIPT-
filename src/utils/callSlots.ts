@@ -105,14 +105,18 @@ export function scheduleAllUnscheduled(
   stages: PipelineStage[],
 ): { id: string; callbackDate: string; callbackTime: string }[] {
   const sortedStages = [...stages].sort((a, b) => a.order - b.order);
-  const first3StageIds = new Set(sortedStages.slice(0, 3).map((s) => s.id));
+  const first3Stages = sortedStages.slice(0, 3);
+  const first3StageIds = new Set(first3Stages.map((s) => s.id));
+  const gatekeeperStageIds = new Set(
+    first3Stages.filter((s) => s.name.toLowerCase().includes('gatekeeper')).map((s) => s.id)
+  );
 
   const targetDate = getNextWorkdayStr();
   const updates: { id: string; callbackDate: string; callbackTime: string }[] = [];
 
-  // Get unscheduled contacts in first 3 columns
+  // Get unscheduled contacts in first 3 columns (excluding gatekeeper)
   const unscheduled = contacts.filter(
-    (c) => first3StageIds.has(c.stageId) && !c.callbackDate
+    (c) => first3StageIds.has(c.stageId) && !gatekeeperStageIds.has(c.stageId) && !c.callbackDate
   );
 
   // Build a virtual contacts list that includes already-scheduled + our new assignments
