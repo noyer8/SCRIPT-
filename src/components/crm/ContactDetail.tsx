@@ -14,7 +14,6 @@ import {
   Check,
   Globe,
   Pin,
-  CalendarClock,
 } from 'lucide-react';
 import { useCrmStore } from '../../store/useCrmStore';
 import type { Activity } from '../../store/useCrmStore';
@@ -423,17 +422,18 @@ export default function ContactDetail() {
               <div>
                 <h3 className="text-sm font-medium text-gray-700 mb-2">Rappel</h3>
                 <div className="space-y-2 p-3 bg-gray-50 rounded-lg">
-                  <CalendarPicker
-                    value={contact.callbackDate || ''}
-                    onChange={(date) => updateContact(contact.id, { callbackDate: date })}
-                  />
                   <div className="flex items-center gap-2">
-                    <CalendarClock className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    <div className="flex-1">
+                      <CalendarPicker
+                        value={contact.callbackDate || ''}
+                        onChange={(date) => updateContact(contact.id, { callbackDate: date })}
+                      />
+                    </div>
                     <input
                       type="time"
                       value={contact.callbackTime || ''}
                       onChange={(e) => updateContact(contact.id, { callbackTime: e.target.value })}
-                      className="px-3 py-1.5 border rounded-lg text-sm flex-1"
+                      className="px-3 py-1.5 border rounded-lg text-sm w-28"
                     />
                     {(contact.callbackDate || contact.callbackTime || contact.callbackNote) && (
                       <button
