@@ -340,8 +340,8 @@ export const useCrmStore = create<CrmState>()(
       scheduleUnscheduled: () => {
         const { contacts, stages } = get();
         const updates = scheduleAllUnscheduled(contacts, stages);
-        updates.forEach(({ id, callbackDate, callbackTime }) => {
-          get().updateContact(id, { callbackDate, callbackTime });
+        updates.forEach(({ id, callbackTime }) => {
+          get().updateContact(id, { callbackTime });
         });
         return updates.length;
       },
@@ -358,7 +358,7 @@ export const useCrmStore = create<CrmState>()(
     }),
     {
       name: 'noyer-crm-storage',
-      version: 2,
+      version: 3,
       migrate: (persisted: unknown, version: number) => {
         const state = persisted as Record<string, unknown>;
         if (version === 0) {
@@ -370,6 +370,17 @@ export const useCrmStore = create<CrmState>()(
           // Migration: add lastCalledDate to existing contacts
           const contacts = (state.contacts as Contact[]) || [];
           state.contacts = contacts.map((c) => ({ ...c, lastCalledDate: (c as Contact).lastCalledDate || '' }));
+        }
+        if (version < 3) {
+          // Migration: clear callbackDate on gatekeeper contacts
+          const contacts = (state.contacts as Contact[]) || [];
+          const stages = (state.stages as PipelineStage[]) || [];
+          const gkIds = new Set(
+            stages.filter((s) => s.name.toLowerCase().includes('gatekeeper')).map((s) => s.id)
+          );
+          state.contacts = contacts.map((c) =>
+            gkIds.has(c.stageId) ? { ...c, callbackDate: '' } : c
+          );
         }
         return state as unknown as CrmState;
       },

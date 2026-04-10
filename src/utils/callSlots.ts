@@ -1,4 +1,3 @@
-import { getNextWorkdayStr } from './dateUtils';
 import type { Contact, PipelineStage } from '../store/useCrmStore';
 
 export interface CallSlot {
@@ -54,24 +53,22 @@ export function suggestNextSlot(fermeture: string): CallSlot | null {
 
 /**
  * Pick the best slot using weighted load balancing.
+ * Counts all contacts with a callbackTime to balance distribution.
  * Slot 4 (17h-18h, weight=2) should get ~2x more prospects than weight=1 slots.
  */
 export function assignBestSlot(
   fermeture: string,
   contacts: Contact[],
-  targetDate?: string,
 ): CallSlot | null {
   const validSlots = getValidSlots(fermeture);
   if (validSlots.length === 0) return null;
 
-  const date = targetDate || getNextWorkdayStr();
-
-  // Count prospects already assigned to each slot on the target date
+  // Count prospects already assigned to each slot
   const slotCounts = new Map<string, number>();
   validSlots.forEach((s) => slotCounts.set(s.start, 0));
 
   contacts.forEach((c) => {
-    if (c.callbackDate === date && c.callbackTime) {
+    if (c.callbackTime) {
       const current = slotCounts.get(c.callbackTime);
       if (current !== undefined) {
         slotCounts.set(c.callbackTime, current + 1);
@@ -97,40 +94,33 @@ export function assignBestSlot(
 }
 
 /**
- * Schedule all unscheduled prospects from the first 3 pipeline columns.
- * Returns array of { contactId, callbackDate, callbackTime } updates.
+ * Assign a time slot to all unscheduled prospects from the first 3 pipeline columns.
+ * Only sets callbackTime (slot), NOT callbackDate.
+ * Date-based callbacks are set manually when a prospect asks to be called back.
  */
 export function scheduleAllUnscheduled(
   contacts: Contact[],
   stages: PipelineStage[],
-): { id: string; callbackDate: string; callbackTime: string }[] {
+): { id: string; callbackTime: string }[] {
   const sortedStages = [...stages].sort((a, b) => a.order - b.order);
-  const first3Stages = sortedStages.slice(0, 3);
-  const first3StageIds = new Set(first3Stages.map((s) => s.id));
-  const gatekeeperStageIds = new Set(
-    first3Stages.filter((s) => s.name.toLowerCase().includes('gatekeeper')).map((s) => s.id)
-  );
+  const first3StageIds = new Set(sortedStages.slice(0, 3).map((s) => s.id));
 
-  const targetDate = getNextWorkdayStr();
-  const updates: { id: string; callbackDate: string; callbackTime: string }[] = [];
+  const updates: { id: string; callbackTime: string }[] = [];
 
-  // Get unscheduled contacts in first 3 columns (excluding gatekeeper)
+  // Get contacts in first 3 columns without a slot assignment
   const unscheduled = contacts.filter(
-    (c) => first3StageIds.has(c.stageId) && !gatekeeperStageIds.has(c.stageId) && !c.callbackDate
+    (c) => first3StageIds.has(c.stageId) && !c.callbackTime
   );
 
-  // Build a virtual contacts list that includes already-scheduled + our new assignments
-  // so each new assignment considers the previous ones
+  // Build a virtual contacts list so each assignment considers the previous ones
   const virtualContacts = [...contacts];
 
   for (const contact of unscheduled) {
-    const slot = assignBestSlot(contact.fermeture, virtualContacts, targetDate);
+    const slot = assignBestSlot(contact.fermeture, virtualContacts);
     if (slot) {
-      updates.push({ id: contact.id, callbackDate: targetDate, callbackTime: slot.start });
-      // Add virtual entry so next iteration sees this assignment
+      updates.push({ id: contact.id, callbackTime: slot.start });
       virtualContacts.push({
         ...contact,
-        callbackDate: targetDate,
         callbackTime: slot.start,
       });
     }

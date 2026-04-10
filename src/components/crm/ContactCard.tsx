@@ -3,9 +3,7 @@ import { useState } from 'react';
 import { useCrmStore } from '../../store/useCrmStore';
 import type { Contact } from '../../store/useCrmStore';
 import { openProspectPopout } from '../../utils/openProspectPopout';
-import { isToday, isPast, formatDateFr, getTodayStr, getNextWorkdayStr } from '../../utils/dateUtils';
-import { assignBestSlot } from '../../utils/callSlots';
-import CallTimeSuggestion from './CallTimeSuggestion';
+import { isToday, isPast, formatDateFr, getTodayStr } from '../../utils/dateUtils';
 
 function getFermetureColor(fermeture: string): string {
   switch (fermeture) {
@@ -27,7 +25,6 @@ function getMissedCallsMax(stageName: string): number {
 export default function ContactCard({ contact, stageName = '', stageIndex = -1 }: { contact: Contact; isFirstStage?: boolean; stageName?: string; stageIndex?: number }) {
   const { setSelectedContact, setPinnedContact, pinnedContactId, stages, updateContact, deleteContact } = useCrmStore();
   const [phoneCopied, setPhoneCopied] = useState(false);
-  const [showTimeSuggestion, setShowTimeSuggestion] = useState(false);
 
   const handlePin = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -116,16 +113,10 @@ export default function ContactCard({ contact, stageName = '', stageIndex = -1 }
                           deleteContact(contact.id);
                         }
                       } else {
-                        const nextDate = getNextWorkdayStr();
-                        const allContacts = useCrmStore.getState().contacts;
-                        const bestSlot = assignBestSlot(contact.fermeture, allContacts, nextDate);
                         updateContact(contact.id, {
                           missedCalls: newCount,
                           lastCalledDate: getTodayStr(),
-                          callbackDate: nextDate,
-                          callbackTime: bestSlot?.start || '09:00',
                         });
-                        setShowTimeSuggestion(true);
                       }
                     }
                   }}
@@ -143,16 +134,6 @@ export default function ContactCard({ contact, stageName = '', stageIndex = -1 }
               );
             })}
             <span className="text-[10px] text-gray-400 ml-1">{contact.missedCalls || 0}/{maxDots}</span>
-            {showTimeSuggestion && (
-              <CallTimeSuggestion
-                fermeture={contact.fermeture}
-                onAccept={(date, time) => {
-                  updateContact(contact.id, { callbackDate: date, callbackTime: time });
-                  setShowTimeSuggestion(false);
-                }}
-                onDismiss={() => setShowTimeSuggestion(false)}
-              />
-            )}
           </div>
         );
       })()}
@@ -199,8 +180,8 @@ export default function ContactCard({ contact, stageName = '', stageIndex = -1 }
         </div>
       )}
 
-      {/* Callback info - read only, shown when set */}
-      {contact.callbackDate && (
+      {/* Callback info - read only, hidden for gatekeeper */}
+      {contact.callbackDate && !stageName.toLowerCase().includes('gatekeeper') && (
         <div className="mt-2 pt-2 border-t border-gray-100">
           <div className="flex items-center gap-1.5 text-[10px]">
             <CalendarClock className={`w-3 h-3 flex-shrink-0 ${callbackIsToday ? 'text-yellow-600' : callbackIsPast ? 'text-red-500' : 'text-gray-400'}`} />
