@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
-import { scheduleAllUnscheduled } from '../utils/callSlots';
+import { scheduleAllUnscheduled, assignBestSlot } from '../utils/callSlots';
 
 // --- Types ---
 
@@ -190,6 +190,13 @@ export const useCrmStore = create<CrmState>()(
           createdAt: now,
           updatedAt: now,
         };
+        // Auto-assign a time slot if in first 3 columns
+        const sortedStages = [...get().stages].sort((a, b) => a.order - b.order);
+        const first3StageIds = new Set(sortedStages.slice(0, 3).map((s) => s.id));
+        if (first3StageIds.has(contact.stageId) && !contact.callbackTime) {
+          const slot = assignBestSlot(contact.fermeture, get().contacts);
+          if (slot) contact.callbackTime = slot.start;
+        }
         set((s) => ({ contacts: [...s.contacts, contact] }));
         return id;
       },
