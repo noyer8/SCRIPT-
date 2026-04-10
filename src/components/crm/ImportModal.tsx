@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react';
 import { X, Upload, FileText, AlertCircle, Check, ArrowRight } from 'lucide-react';
 import { useCrmStore } from '../../store/useCrmStore';
+import { getTodayStr } from '../../utils/dateUtils';
+import { assignBestSlot } from '../../utils/callSlots';
 
 type Step = 'input' | 'mapping' | 'preview' | 'done';
 
@@ -295,6 +297,14 @@ export default function ImportModal({ onClose }: Props) {
         fermeture: normalizeFermeture(data.fermeture || ''),
         stageId,
       });
+
+      // Auto-assign call slot based on fermeture + load balancing
+      const ferm = normalizeFermeture(data.fermeture || '');
+      const allContacts = useCrmStore.getState().contacts;
+      const bestSlot = assignBestSlot(ferm, allContacts);
+      if (bestSlot) {
+        updateContact(contactId, { callbackDate: getTodayStr(), callbackTime: bestSlot.start });
+      }
 
       // Tags
       if (data.tags) {
