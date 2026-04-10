@@ -56,19 +56,17 @@ export default function ContactCard({ contact, stageName = '', stageIndex = -1, 
               : 'border-gray-200 hover:border-gray-300'
       }`}
     >
+      {showStageBadge && stageName && (
+        <span
+          className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full text-white uppercase inline-block mb-1.5"
+          style={{ backgroundColor: stageColor }}
+        >
+          {stageName}
+        </span>
+      )}
       <div className="flex items-start justify-between mb-2">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <span className="font-medium text-sm text-gray-900 truncate">
-            {contact.firstName} {contact.lastName}
-          </span>
-          {showStageBadge && stageName && (
-            <span
-              className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full text-white flex-shrink-0 uppercase"
-              style={{ backgroundColor: stageColor }}
-            >
-              {stageName}
-            </span>
-          )}
+        <div className="font-medium text-sm text-gray-900">
+          {contact.firstName} {contact.lastName}
         </div>
         <div className="flex items-center gap-1">
           {stageIndex >= 0 && stageIndex < 3 && (contact.zone || contact.fermeture) && (
