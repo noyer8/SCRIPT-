@@ -103,7 +103,7 @@ export function scheduleAllUnscheduled(
   stages: PipelineStage[],
 ): { id: string; callbackTime: string }[] {
   const sortedStages = [...stages].sort((a, b) => a.order - b.order);
-  const first3StageIds = new Set(sortedStages.slice(0, 3).map((s) => s.id));
+  const first3StageIds = new Set(sortedStages.slice(0, 2).map((s) => s.id));
 
   const updates: { id: string; callbackTime: string }[] = [];
 

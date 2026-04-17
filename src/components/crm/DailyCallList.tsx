@@ -26,7 +26,7 @@ export default function DailyCallList() {
   const currentHour = now.getHours() + now.getMinutes() / 60;
 
   const sortedStages = [...stages].sort((a, b) => a.order - b.order);
-  const first3StageIds = new Set(sortedStages.slice(0, 3).map((s) => s.id));
+  const first3StageIds = new Set(sortedStages.slice(0, 2).map((s) => s.id));
 
   const getStageInfo = (stageId: string) => {
     const idx = sortedStages.findIndex((s) => s.id === stageId);

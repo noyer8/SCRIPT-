@@ -190,9 +190,9 @@ export const useCrmStore = create<CrmState>()(
           createdAt: now,
           updatedAt: now,
         };
-        // Auto-assign a time slot if in first 3 columns
+        // Auto-assign a time slot if in first 2 columns
         const sortedStages = [...get().stages].sort((a, b) => a.order - b.order);
-        const first3StageIds = new Set(sortedStages.slice(0, 3).map((s) => s.id));
+        const first3StageIds = new Set(sortedStages.slice(0, 2).map((s) => s.id));
         if (first3StageIds.has(contact.stageId) && !contact.callbackTime) {
           const slot = assignBestSlot(contact.fermeture, get().contacts);
           if (slot) contact.callbackTime = slot.start;
