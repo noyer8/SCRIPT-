@@ -16,10 +16,9 @@ function getFermetureColor(fermeture: string): string {
   }
 }
 
-function getMissedCallsMax(stageName: string): number {
-  const name = stageName.toLowerCase();
-  if (name.includes('gatekeeper')) return 2;
-  if (name.includes('froid')) return 3;
+function getMissedCallsMax(stageIndex: number): number {
+  if (stageIndex === 0) return 2;
+  if (stageIndex === 1) return 3;
   return 0;
 }
 
@@ -102,7 +101,7 @@ export default function ContactCard({ contact, stageName = '', stageIndex = -1, 
 
       {/* Missed calls tracker */}
       {(() => {
-        const maxDots = getMissedCallsMax(stageName);
+        const maxDots = getMissedCallsMax(stageIndex);
         if (maxDots === 0 || !contact.phone) return null;
         return (
           <div className="relative flex items-center gap-1 mb-2" onClick={(e) => e.stopPropagation()}>
