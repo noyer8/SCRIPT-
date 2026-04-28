@@ -19,6 +19,7 @@ function getFermetureColor(fermeture: string): string {
 function getMissedCallsMax(stageIndex: number): number {
   if (stageIndex === 0) return 2;
   if (stageIndex === 1) return 3;
+  if (stageIndex === 2) return 3;
   return 0;
 }
 
