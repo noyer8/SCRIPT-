@@ -14,6 +14,7 @@ import {
   Check,
   Globe,
   Pin,
+  Video,
 } from 'lucide-react';
 import { useCrmStore } from '../../store/useCrmStore';
 import type { Activity } from '../../store/useCrmStore';
@@ -414,6 +415,16 @@ export default function ContactDetail() {
                         </a>
                       </div>
                     )}
+                    <button
+                      onClick={() => {
+                        const url = `https://piks-immo.com/rdv?nom=${encodeURIComponent(contact.lastName)}&agence=${encodeURIComponent(contact.company)}&email=${encodeURIComponent(contact.email)}`;
+                        window.open(url, '_blank');
+                      }}
+                      className="flex items-center gap-3 w-full p-3 bg-green-50 hover:bg-green-100 rounded-lg transition-colors text-left"
+                    >
+                      <Video className="w-4 h-4 text-green-600" />
+                      <span className="text-sm font-medium text-green-700">Invitation Meet</span>
+                    </button>
                   </>
                 )}
               </div>
