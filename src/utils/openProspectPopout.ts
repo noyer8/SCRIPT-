@@ -40,6 +40,10 @@ function buildHtml(contact: Contact, stage?: PipelineStage): string {
       <div class="row">
         ${facebookLink}
       </div>` : ''}
+      <a href="https://piks-immo.com/rdv?nom=${encodeURIComponent(contact.lastName)}&agence=${encodeURIComponent(contact.company)}&email=${encodeURIComponent(contact.email)}" target="_blank" class="meet-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect width="15" height="14" x="1" y="5" rx="2" ry="2"/></svg>
+        Invitation Meet
+      </a>
       ${contact.tags.length > 0 ? `
       <div class="tags">
         ${contact.tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}
@@ -118,6 +122,21 @@ const CSS = `
   }
   .row:hover .copy-btn { display: block; }
   .copy-btn:hover { background: rgba(255,255,255,0.1); color: #a5b4fc; }
+  .meet-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    background: rgba(34,197,94,0.15);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #4ade80;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+  .meet-btn:hover { background: rgba(34,197,94,0.25); }
 `;
 
 export async function openProspectPopout(contact: Contact, stage?: PipelineStage) {
