@@ -7,7 +7,7 @@ import AddContactModal from './AddContactModal';
 import { isToday, isPast, isFuture } from '../../utils/dateUtils';
 
 export default function Pipeline() {
-  const { stages, contacts, moveContact, showOnlyCallable } = useCrmStore();
+  const { stages, contacts, moveContact, showOnlyCallable, updateStage } = useCrmStore();
   const [addToStage, setAddToStage] = useState<string | null>(null);
   const [draggedContact, setDraggedContact] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
@@ -107,6 +107,19 @@ export default function Pipeline() {
                     <span className="text-xs bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded-full">
                       {stageContacts.length}
                     </span>
+                    <button
+                      onClick={() => updateStage(stage.id, { missedCallsEnabled: !stage.missedCallsEnabled })}
+                      className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
+                        stage.missedCallsEnabled
+                          ? 'bg-red-400 border-red-400'
+                          : 'border-gray-300 hover:border-red-300'
+                      }`}
+                      title={stage.missedCallsEnabled ? 'Désactiver les boules' : 'Activer les boules'}
+                    >
+                      {stage.missedCallsEnabled && (
+                        <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                      )}
+                    </button>
                   </div>
                   <button
                     onClick={() => setAddToStage(stage.id)}

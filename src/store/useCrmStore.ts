@@ -21,6 +21,8 @@ export interface PipelineStage {
   name: string;
   color: string;
   order: number;
+  missedCallsEnabled?: boolean;
+  missedCallsMax?: number;
 }
 
 export interface Activity {
@@ -365,7 +367,7 @@ export const useCrmStore = create<CrmState>()(
     }),
     {
       name: 'noyer-crm-storage',
-      version: 4,
+      version: 5,
       migrate: (persisted: unknown, version: number) => {
         const state = persisted as Record<string, unknown>;
         if (version === 0) {
@@ -399,6 +401,15 @@ export const useCrmStore = create<CrmState>()(
           state.contacts = contacts.map((c) =>
             first3Ids.has(c.stageId) ? { ...c, callbackDate: '' } : c
           );
+        }
+        if (version < 5) {
+          const stages = (state.stages as PipelineStage[]) || [];
+          const sorted = [...stages].sort((a, b) => a.order - b.order);
+          state.stages = sorted.map((s, i) => ({
+            ...s,
+            missedCallsEnabled: i < 3,
+            missedCallsMax: i === 0 ? 2 : 3,
+          }));
         }
         return state as unknown as CrmState;
       },
