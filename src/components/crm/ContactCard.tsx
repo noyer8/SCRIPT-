@@ -16,13 +16,6 @@ function getFermetureColor(fermeture: string): string {
   }
 }
 
-function getMissedCallsMax(stageIndex: number): number {
-  if (stageIndex === 0) return 2;
-  if (stageIndex === 1) return 3;
-  if (stageIndex === 2) return 3;
-  return 0;
-}
-
 export default function ContactCard({ contact, stageName = '', stageIndex = -1, showStageBadge = false }: { contact: Contact; isFirstStage?: boolean; stageName?: string; stageIndex?: number; showStageBadge?: boolean }) {
   const { setSelectedContact, setPinnedContact, pinnedContactId, stages, updateContact, deleteContact } = useCrmStore();
   const [phoneCopied, setPhoneCopied] = useState(false);
@@ -102,8 +95,10 @@ export default function ContactCard({ contact, stageName = '', stageIndex = -1, 
 
       {/* Missed calls tracker */}
       {(() => {
-        const maxDots = getMissedCallsMax(stageIndex);
-        if (maxDots === 0 || !contact.phone) return null;
+        const sortedStages = [...stages].sort((a, b) => a.order - b.order);
+        const stage = sortedStages[stageIndex];
+        if (!stage?.missedCallsEnabled || !contact.phone) return null;
+        const maxDots = stage.missedCallsMax || 3;
         return (
           <div className="relative flex items-center gap-1 mb-2" onClick={(e) => e.stopPropagation()}>
             <Phone className="w-3 h-3 text-gray-400 mr-0.5" />
