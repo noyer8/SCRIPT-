@@ -417,7 +417,9 @@ export default function ContactDetail() {
                     )}
                     <button
                       onClick={() => {
-                        const url = `https://piks-immo.com/rdv?nom=${encodeURIComponent(contact.lastName)}&agence=${encodeURIComponent(contact.company)}&email=${encodeURIComponent(contact.email)}`;
+                        const isQuebec = stage?.name.toLowerCase().includes('quebec') || stage?.name.toLowerCase().includes('québec');
+                        let url = `https://piks-immo.com/rdv?nom=${encodeURIComponent(contact.lastName)}&agence=${encodeURIComponent(contact.company)}&email=${encodeURIComponent(contact.email)}&telephone=${encodeURIComponent(contact.phone)}`;
+                        if (isQuebec) url += '&tz=quebec';
                         window.open(url, '_blank');
                       }}
                       className="flex items-center gap-3 w-full p-3 bg-green-50 hover:bg-green-100 rounded-lg transition-colors text-left"
