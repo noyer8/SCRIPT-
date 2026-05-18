@@ -39,8 +39,12 @@ export default function ContactCard({ contact, stageName = '', stageIndex = -1, 
 
   return (
     <div
-      onClick={() => setSelectedContact(contact.id)}
-      className={`group bg-white rounded-lg border p-3 hover:shadow-md transition-all cursor-pointer ${
+      onClick={() => {
+        const sel = window.getSelection();
+        if (sel && sel.toString().length > 0) return;
+        setSelectedContact(contact.id);
+      }}
+      className={`group bg-white rounded-lg border p-3 hover:shadow-md transition-all cursor-pointer select-text ${
         callbackIsToday
           ? 'border-yellow-400 bg-yellow-50 shadow-[0_0_12px_rgba(250,204,21,0.4)]'
           : callbackIsPast
