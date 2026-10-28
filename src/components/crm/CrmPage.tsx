@@ -12,7 +12,9 @@ import {
   RefreshCw,
   CalendarCheck,
   PhoneCall,
+  Sparkles,
 } from 'lucide-react';
+import { loadDemoData, clearDemoData, DEMO_TAG } from '../../utils/demoData';
 import { getSyncConfig, pushToGist, saveSyncConfig } from '../../utils/gistSync';
 import { useCrmStore } from '../../store/useCrmStore';
 import Pipeline from './Pipeline';
@@ -271,6 +273,28 @@ export default function CrmPage() {
           </div>
         </div>
       </header>
+
+      {/* Demo data */}
+      {contacts.length === 0 && (
+        <div className="mx-4 mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-blue-800">Ton CRM est vide. Importe tes prospects ou essaie avec des données fictives.</p>
+          <button
+            onClick={() => loadDemoData()}
+            className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium"
+          >
+            <Sparkles className="w-4 h-4" />
+            Charger une démo
+          </button>
+        </div>
+      )}
+      {contacts.some((c) => c.tags.includes(DEMO_TAG)) && (
+        <div className="mx-4 mt-4 px-4 py-2 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between gap-3">
+          <p className="text-sm text-amber-800">Données de démo affichées.</p>
+          <button onClick={() => clearDemoData()} className="text-sm font-medium text-amber-800 hover:underline">
+            Retirer la démo
+          </button>
+        </div>
+      )}
 
       {/* Content */}
       {view === 'pipeline' ? <Pipeline /> : view === 'list' ? <ListView /> : <DailyCallList />}

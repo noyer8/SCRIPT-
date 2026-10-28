@@ -17,6 +17,7 @@ Runs entirely in the browser: no backend, no account. Data stays in your browser
 - **CSV / TSV import** with column mapping and auto-detected separators
 - **Custom fields**, tags, activity history and callback reminders
 - **Cross-device sync** through a private GitHub Gist (token stays in your browser)
+- **One-click demo data** to try the CRM without importing anything
 - **Optional integrations**: a booking link with prospect placeholders, and a webhook fired on import (n8n, Make, Zapier...)
 
 ## Getting started
