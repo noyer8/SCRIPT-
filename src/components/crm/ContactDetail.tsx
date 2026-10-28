@@ -20,6 +20,7 @@ import { useCrmStore } from '../../store/useCrmStore';
 import type { Activity } from '../../store/useCrmStore';
 import { openProspectPopout } from '../../utils/openProspectPopout';
 import CalendarPicker from './CalendarPicker';
+import { buildBookingUrl } from '../../utils/integrations';
 
 const ACTIVITY_ICONS: Record<Activity['type'], React.ElementType> = {
   call: Phone,
@@ -415,18 +416,18 @@ export default function ContactDetail() {
                         </a>
                       </div>
                     )}
-                    <button
-                      onClick={() => {
-                        const isQuebec = stage?.name.toLowerCase().includes('quebec') || stage?.name.toLowerCase().includes('québec');
-                        let url = `https://piks-immo.com/rdv?nom=${encodeURIComponent(contact.lastName)}&agence=${encodeURIComponent(contact.company)}&email=${encodeURIComponent(contact.email)}&telephone=${encodeURIComponent(contact.phone)}`;
-                        if (isQuebec) url += '&tz=quebec';
-                        window.open(url, '_blank');
-                      }}
-                      className="flex items-center gap-3 w-full p-3 bg-green-50 hover:bg-green-100 rounded-lg transition-colors text-left"
-                    >
-                      <Video className="w-4 h-4 text-green-600" />
-                      <span className="text-sm font-medium text-green-700">Invitation Meet</span>
-                    </button>
+                    {buildBookingUrl(contact) && (
+                      <button
+                        onClick={() => {
+                          const url = buildBookingUrl(contact);
+                          if (url) window.open(url, '_blank');
+                        }}
+                        className="flex items-center gap-3 w-full p-3 bg-green-50 hover:bg-green-100 rounded-lg transition-colors text-left"
+                      >
+                        <Video className="w-4 h-4 text-green-600" />
+                        <span className="text-sm font-medium text-green-700">Invitation</span>
+                      </button>
+                    )}
                   </>
                 )}
               </div>

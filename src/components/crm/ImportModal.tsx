@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { X, Upload, FileText, AlertCircle, Check, ArrowRight } from 'lucide-react';
 import { useCrmStore } from '../../store/useCrmStore';
 import { assignBestSlot } from '../../utils/callSlots';
+import { getIntegrations } from '../../utils/integrations';
 
 type Step = 'input' | 'mapping' | 'preview' | 'done';
 
@@ -15,8 +16,6 @@ interface ToastMessage {
   type: 'success' | 'error';
   text: string;
 }
-
-const WEBHOOK_URL = 'https://pierre07.app.n8n.cloud/webhook/cfa0fd5e-ad41-462a-9fe4-a8d0eafe5fd8';
 
 // CRM target fields
 const CRM_FIELDS = [
@@ -241,7 +240,7 @@ export default function ImportModal({ onClose }: Props) {
       fermeture: normalizeFermeture(data.fermeture || ''),
     };
 
-    const res = await fetch(WEBHOOK_URL, {
+    const res = await fetch(getIntegrations().importWebhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -336,7 +335,7 @@ export default function ImportModal({ onClose }: Props) {
     setStep('done');
 
     // Send webhooks with delay
-    if (contactsToWebhook.length > 0) {
+    if (contactsToWebhook.length > 0 && getIntegrations().importWebhookUrl.trim()) {
       setWebhookSending(true);
       for (const data of contactsToWebhook) {
         try {
