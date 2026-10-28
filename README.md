@@ -28,7 +28,7 @@ npm install
 npm run dev
 ```
 
-Build for production with `npm run build`. The included GitHub Actions workflow deploys to GitHub Pages on every push to `main`.
+Build for production with `npm run build`. The included GitHub Actions workflow deploys to GitHub Pages on every push to the default branch.
 
 ## Configuration
 
