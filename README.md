@@ -1,73 +1,56 @@
-# React + TypeScript + Vite
+# ScriptFlow CRM
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A lightweight cold-calling CRM with visual call scripts, built for solo founders who prospect by phone.
 
-Currently, two official plugins are available:
+**Live demo:** https://noyer8.github.io/SCRIPT-/#/crm
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Runs entirely in the browser: no backend, no account. Data stays in your browser and can be synced across devices through a private GitHub Gist.
 
-## React Compiler
+> UI is in French. Contributions for other languages are welcome.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Features
 
-## Expanding the ESLint configuration
+- **Pipeline board** with drag & drop, configurable stages and colors
+- **Daily call list** with automatic call-slot suggestions based on each prospect's opening hours, load-balanced across the day
+- **Visual call scripts**: build branching scripts as a flowchart, then play them live during the call
+- **Prospect pop-out** (Picture-in-Picture) that stays on top while you dial
+- **CSV / TSV import** with column mapping and auto-detected separators
+- **Custom fields**, tags, activity history and callback reminders
+- **Cross-device sync** through a private GitHub Gist (token stays in your browser)
+- **Optional integrations**: a booking link with prospect placeholders, and a webhook fired on import (n8n, Make, Zapier...)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Getting started
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+git clone https://github.com/noyer8/SCRIPT-.git
+cd SCRIPT-
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Build for production with `npm run build`. The included GitHub Actions workflow deploys to GitHub Pages on every push to `main`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Configuration
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Everything is configured in the app under **Settings**:
+
+| Tab | What it does |
+| --- | --- |
+| Étapes du pipeline | Add, rename, reorder and color stages |
+| Champs personnalisés | Add text, number, date, select, checkbox fields |
+| Synchronisation | Paste a GitHub token with the `gist` scope to sync |
+| Intégrations | Booking link template and import webhook |
+
+Booking link placeholders: `{firstName}` `{lastName}` `{company}` `{email}` `{phone}`.
+
+## Tech stack
+
+React 19, TypeScript, Vite, Tailwind CSS, Zustand (persisted to localStorage), React Flow.
+
+## Contributing
+
+Issues and pull requests are welcome. Run `npm run build` before opening a PR.
+
+## License
+
+[MIT](LICENSE)

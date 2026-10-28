@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { X, Plus, Trash2, GripVertical, RefreshCw, Upload, Download, Check, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useCrmStore } from '../../store/useCrmStore';
 import type { FieldType, Contact, PipelineStage, CustomField, Activity } from '../../store/useCrmStore';
+import { getIntegrations, saveIntegrations } from '../../utils/integrations';
 import { getSyncConfig, saveSyncConfig, pushToGist, pullFromGist, validateToken, findExistingGist } from '../../utils/gistSync';
 
 interface Props {
@@ -34,7 +35,9 @@ export default function SettingsModal({ onClose }: Props) {
     reorderStages,
   } = store;
 
-  const [tab, setTab] = useState<'stages' | 'fields' | 'sync'>('stages');
+  const [tab, setTab] = useState<'stages' | 'fields' | 'sync' | 'integrations'>('stages');
+  const [integrations, setIntegrations] = useState(getIntegrations);
+  const [integrationsSaved, setIntegrationsSaved] = useState(false);
   const [newStageName, setNewStageName] = useState('');
   const [newStageColor, setNewStageColor] = useState('#6366f1');
   const [newFieldName, setNewFieldName] = useState('');
@@ -213,6 +216,14 @@ export default function SettingsModal({ onClose }: Props) {
             <RefreshCw className="w-3.5 h-3.5" />
             Synchronisation
           </button>
+          <button
+            onClick={() => setTab('integrations')}
+            className={`px-4 py-3 text-sm font-medium border-b-2 ${
+              tab === 'integrations' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500'
+            }`}
+          >
+            Intégrations
+          </button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6">
@@ -346,6 +357,47 @@ export default function SettingsModal({ onClose }: Props) {
                   Ajouter le champ
                 </button>
               </div>
+            </div>
+          )}
+
+          {tab === 'integrations' && (
+            <div className="space-y-6">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
+                Optionnel. Ces réglages restent dans ton navigateur.
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 block">Lien de prise de rendez-vous</label>
+                <p className="text-xs text-gray-500">
+                  Affiche le bouton Invitation sur chaque prospect. Variables : {'{firstName}'} {'{lastName}'} {'{company}'} {'{email}'} {'{phone}'}
+                </p>
+                <input
+                  type="url"
+                  value={integrations.bookingUrlTemplate}
+                  onChange={(e) => { setIntegrations({ ...integrations, bookingUrlTemplate: e.target.value }); setIntegrationsSaved(false); }}
+                  placeholder="https://cal.com/moi?name={firstName}%20{lastName}&email={email}"
+                  className="w-full px-3 py-2 border rounded-lg text-sm"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 block">Webhook à l'import</label>
+                <p className="text-xs text-gray-500">
+                  Appelé en POST (JSON) pour chaque contact importé dans une étape « préchauffage » (n8n, Make, Zapier...).
+                </p>
+                <input
+                  type="url"
+                  value={integrations.importWebhookUrl}
+                  onChange={(e) => { setIntegrations({ ...integrations, importWebhookUrl: e.target.value }); setIntegrationsSaved(false); }}
+                  placeholder="https://..."
+                  className="w-full px-3 py-2 border rounded-lg text-sm"
+                />
+              </div>
+              <button
+                onClick={() => { saveIntegrations(integrations); setIntegrationsSaved(true); }}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
+              >
+                {integrationsSaved ? <Check className="w-4 h-4" /> : null}
+                {integrationsSaved ? 'Enregistré' : 'Enregistrer'}
+              </button>
             </div>
           )}
 
